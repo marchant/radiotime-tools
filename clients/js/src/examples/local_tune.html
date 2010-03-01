@@ -28,7 +28,7 @@
 	<!--Used to list the local stations-->
 	<ul id="stations">
 	</ul>
-<script src="/rt-tools/js/radiotime.js"></script>
+<script src="/radiotime-tools/js/radiotime.js"></script>
 <!--Just for making the examples concise, not needed by RadioTime.js.-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
 <script>
@@ -39,7 +39,7 @@ $(window).load(function() {
 	//Initialize the library with our partnerId, 
 	//	using HTML container rt_transport, 
 	//	and enabling verbose output.
-	RadioTime.init(partnerId, "rt_transport", "/rt-tools/", {'verbose':true});	
+	RadioTime.init(partnerId, "rt_transport", "/radiotime-tools/", {'verbose':true});	
 	
 	//Use playstateChanged events to synchronize the display with the audio playback.
 	RadioTime.event.subscribe("playstateChanged", function(state) { 
@@ -88,14 +88,15 @@ $(window).load(function() {
 
 
 function play(stationId) {
-	RadioTime.loadJSON(RadioTime.getTuneUrl(stationId),
+	RadioTime.API.tune(
 		function(playlist) {
 			RadioTime.debug(playlist);
 			RadioTime.player.startPlaylist(playlist);
 		},
 		function() {
 			RadioTime.debug("Failed to tune station " + stationId);
-		}
+		},
+		stationId
 	);
 }
 

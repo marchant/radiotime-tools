@@ -449,9 +449,6 @@ var RadioTime = {
 			this.guide_id = null;
 		}
 	},
-	getTuneUrl: function(guideId) {
-		return this._formatReq("Tune.ashx?id=" + guideId).url;
-	},
 	logoSizes: {"square": "q", "small": "s", "normal": ""}, 
 	logoFormats: {"png":"png","gif":"gif"},
 	getLogoUrl: function(guide_id, logoSize, logoFormat) {
@@ -720,6 +717,9 @@ var RadioTime = {
 		}
 		return function(){ return method.apply(scope, arguments || []); };
 	},	
+	getTuneUrl: function(guideId) {
+		return this._formatReq("Tune.ashx?id=" + guideId).url;
+	},
 	API: {
 		getCategory: function(success, failure, category) {
 			RadioTime.event.raise("loading", 'status_loading');
@@ -762,6 +762,10 @@ var RadioTime = {
 		describe: function(success, failure, id){
 			RadioTime.event.raise("loading", 'status_finding_stations');
 			RadioTime.loadJSON("Describe.ashx?id=" + id, success, failure);
+		},
+		tune: function(success, failure, guideId) { 
+			RadioTime.event.raise("loading", 'status_loading');
+			RadioTime.loadJSON(RadioTime.getTuneUrl(guideId), success, failure);
 		},
 		getOptions: function(success, failure, id){
 			RadioTime.event.raise("loading", 'status_loading');
