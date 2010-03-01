@@ -1,0 +1,618 @@
+<html>
+<head>
+<base href="http://inside.radiotime.com/">
+</head>
+
+#Summary#
+
+RadioTime provides a thorough directory of audio stations and program schedules, logos and identifiers by supporting selection via location, search, and categorization.
+
+[RadioTime.js](http://code.google.com/p/radiotime-tools/) is an MIT-licensed JavaScript client to [RadioTime](http://radiotime.com/)'s [JSON/OPML API](http://inside.radiotime.com/developers/api/opml).
+
+RadioTime.js is a new library and some interfaces are immature.  If you have difficulty using it, we would [love feedback](mailto:development@radiotime.com) on how to improve it.  Patches happily accepted.  No promise of API stability is yet appropriate.
+
+Attributes and functions whose names begin with "_" should be considered private and not altered.
+
+#Requirements# {#requirements}
+
+RadioTime.js requires a browser host environment (i.e. access to the [DOM](http://en.wikipedia.org/wiki/Document_Object_Model)) and should work in any [A-Grade browser](http://developer.yahoo.com/yui/articles/gbs/).  It was originally designed to work with [CE-HTML](http://en.wikipedia.org/wiki/CE-HTML) and should have a minimal resource footprint.
+
+To use RadioTime.js, you will also need a free RadioTime partner ID, which you can obtain by [creating an account on RadioTime.com](https://radiotime.com/Enroll/QuickEnroll.aspx?redir=/Services.aspx), then [creating a partner ID](http://radiotime.com/services.aspx).  Using a Partner ID raises >>>API limits placed on anonymous usage, allows us to provide better support for your application, and allows application-specific server-side configuration and >>>reserved features.
+
+Due to current implementation limitations, you can only use one instance of RadioTime.js per page.
+
+A [persistent cookie](http://en.wikipedia.org/wiki/HTTP_cookie) named radiotime_serial is created to allow us to gather rough usage statistics and to provide persistent per-user presets (without user registration) via the API.
+
+Additionally, if you would like to include audio playback, a media player is necessary.  Several [are provided](#RadioTimePlayer), but you can supply your own as well.
+
+#Examples#
+
+Each example assumes 
+
+##Local Station Tune##
+
+##Search and play the first result##
+
+##Jukebox - Random station within a category##
+
+##Serial-based presets##
+	
+##Report stream error##
+
+#Library Guide#
+
+.init
+localization
+player events
+event order
+pagination
+
+#Library Reference#
+
+##RadioTime.$##
+
+An alias for document.getElementById.
+
+##RadioTime.debug## {#RadioTimeDebug}
+If opts.verbose is true, RadioTime.debug(...) issues library debugging information (via [window.console](http://getfirebug.com/logging) or an element with ID "radiotime_log".
+
+##RadioTime.init## {#RadioTimeInit}
+
+RadioTime.init initializes the library and as such must be called before any other functions in the API.
+
+RadioTime.init(partnerId, containerId, path, *opts*) 
+
+|Parameter|Description|default|
+|--|--|--|
+|partnerId|[your partner ID](#requirements)|*required*|
+|containerId|A valid HTML ID|*required*|
+|path|A full or relative URL from the host page to the path containing RadioTime.js itself.|*required|
+|opts.env|"beta" to use our Dev environment|"stable"|
+|opts.formats|An array of [formats](http://inside.radiotime.com/developers/api/opml#streams) to base responses on if no player is used.|RadioTime.player.formats|
+|opts.useAMPM|Whether to display AM/PM or 24-hour times|true|
+|opts.enableEvents|Whether to raise the [events described below](#RadioTimeEvents).|true|
+|opts.history|See [RadioTime.history](#RadioTimeHistory)|"singlePage"|
+|opts.onHistoryChange|See [RadioTime.history](#RadioTimeHistory)|undefined|
+|opts.latlon|The user's location, expressed as a string, e.g. "32.547,-97.383"|location derived from IP address|
+|opts.player|Your player implementation (see [RadioTime.player](#RadioTimePlayer) below)|undefined|
+|opts.noPlayer|Set to true if audio playback is not needed.  The broadest [stream selection](http://inside.radiotime.com/developers/guide/solutions/streaming) can then be shown.|false|
+|opts.verbose|Turns on debugging output via [RadioTime.debug](#RadioTimeDebug)|false|
+
+partnerId is a string that uniquely identifies your application.
+
+containerId is an HTML element that RadioTime.js can use for internal operations (currently player embedding and script tags used for API transport).
+
+path is used internally to create URLs from the host document to the URL for RadioTime.js.  This is used to reference other files which RadioTime.js requires, such as the flash player.  For example, if your host page was http://example.com and you placed the RadioTime.js source at http://example.com/js/RadioTime.js, then *path* should be either "http://examplecom/js/" or "js/".
+
+opts.formats is only used if opts.noPlayer is true; otherwise, the selected player's supported formats are used.  If opts.noPlayer is true but opts.formats is not passed, [wma and flash](http://inside.radiotime.com/developers/api/opml#streams) are used.
+
+##RadioTime.latlon## {{#RadioTimeLatLon}
+
+If set to a string with latitude and longitude in a string-delimited format, e.g. "32.547,-97.383", this is passed as an explicit location for local API calls.  If not set, the user's IP is used for location.
+
+##RadioTime.loadJSON## {#RadioTimeLoadJSON}
+
+RadioTime.loadJSON is a utility function to make requests to the RadioTime [JSON API](http://inside.radiotime.com/developers/api/opml/methods) and handle dispatch on success or failure.  If you need to use loadJSON directly, please consider filing a feature request for a more specific wrapper function.
+
+##RadioTime.API##
+
+RadioTime.API includes a collection of wrappers and convenience functions over the [JSON API](/developers/api/opml).
+
+The API functions are asynchronous because they have to make network requests and would otherwise block the JavaScript thread.  RadioTime.API methods always take *success* and *failure* functions, and perhaps additional parameters specific to the call.
+
+success receives (body, head) as arguments, while failure receives only (head).
+
+###Included parameters###
+
+RadioTime.js includes the following [global parameters](http://inside.radiotime.com/developers/api/opml#parameters) on each request:
+
+|Name|Value|
+|partnerId|init(partnerId)|
+|serial|radiotime_serial cookie|
+|formats|init(...,opts.formats)|
+|locale|RadioTime.locale if defined|
+|render|"json"|
+|latlon|RadioTime.latlon if defined|
+
+#### Other Global parameters####
+
+The username global parameter is not currently unsupported by RadioTime.API. If you need to use it, please [let us know](mailto:development@radiotime.com).  You can use RadioTime.loadJSON and RadioTime._formatReq for now.
+
+###RadioTime.API.getLocalStrings### {#RadioTimeAPIGetLocalStrings}
+
+If you choose to localize your application, you can store your key-string mappings on the RadioTime servers.  Calling this method will populate RadioTime.localStrings based on those keys and the [requested locale](#RadioTimeLocale).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
+
+Raises the custom [localStrings](#CustomEventLocalStrings) event upon completion.
+
+###RadioTime.API.getRootMenu### {#RadioTimeAPIGetRootMenu}
+
+getRootMenu(success, failure)
+
+Equivalent to [Index Browse](http://inside.radiotime.com/developers/api/opml/methods/browse#index).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading_menu".
+
+###RadioTime.API.getCategory### {#RadioTimeAPIGetCategory}
+
+getCategory(success, failure, categoryId)
+
+Equivalent to [Browse Category](http://inside.radiotime.com/developers/api/opml/methods/browse#category).  
+
+While there are many category IDs, most of these should be accessed through drill-down from the results of getRootMenu (whose results include URLs for category browse) because [these IDs](/developers/api/opml/usage#RadioTimeIDs) may not be stable over time. 
+
+However, this method may be useful for the following stable category names: 
+ 
+ * lang
+ * local
+ * music
+ * podcast
+ * popular
+ * presets
+ * talk
+ * sports
+ * world
+ 
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
+
+###RadioTime.API.getStationSchedule### {#RadioTimeAPIGetStationSchedule}
+
+getStationSchedule(stationId, success, failure)
+
+Equivalent to [Browse Station Schedule](/developers/api/opml/methods/browse#schedules).
+
+You may prefer to use [RadioTime.schedule](#RadioTimeSchedule) which provides some convenience functions around schedule handling.
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading_schedule". 
+
+###RadioTime.API.getProgramListeningOptions### {#RadioTimeAPIGetProgramListeningOptions}
+
+getProgramListeningOptions(success, failure, programId)
+
+Equivalent to [Tune Program](/developers/api/opml/methods/tune/#program).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
+
+###RadioTime.API.describe### {#RadioTimeAPIDescribe}
+
+describe(success, failure, id)
+
+Equivalent to [Describe Station or Describe Program](/developers/api/opml/methods/describe#station).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_finding_stations".
+
+###RadioTime.API.getOptions### {#RadioTimeAPIGetOptions}
+
+getOptions(success, failure, id)
+
+Equivalent to [Station or Program](/developers/api/opml/methods/options).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
+
+###RadioTime.API.getRelated### {#RadioTimeAPIGetRelated}
+
+getRelated(success, failure, id)
+
+Equivalent to [Browse Station or Program](/developers/api/opml/methods/browse#station).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
+
+###RadioTime.API.addPreset### {#RadioTimeAPIAddPreset}
+
+Adds a station or program to presets.
+
+addPreset(success, failure, id)
+
+Equivalent to [Preset](/developers/api/opml/methods/preset) with c=add.
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_adding_preset".
+
+###RadioTime.API.removePreset### {#RadioTimeAPIRemovePreset}
+
+Removes a station or program from presets.
+
+removePreset(success, failure, id)
+
+Equivalent to [Preset](/developers/api/opml/methods/preset) with c=remove.
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_removing_preset". 
+
+###RadioTime.API.search### {#RadioTimeAPISearch}
+
+search(success, failure, query, filter)
+
+Equivalent to [Search](/developers/api/opml/methods/search).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_searching".
+
+###RadioTime.API.getAccountStatus### {#RadioTimeAPIGetAccountStatus}
+
+getAccountStatus(success, failure)
+
+Checks whether the client's serial number is tied to a RadioTime.com account.  Success receives an object {hasAccount: Boolean, text: String}.
+
+If hasAccount, then text is the associated RadioTime.com account name.  Otherwise, the text is a codeword the user can use to associate the account. 
+
+The main benefit of joining an account is shared presets between multiple devices (even across partners).  An app user with an existing account can add your device using the codeword at [the device registration page](http://radiotime.com/mydevice).
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_checking_account".
+
+###RadioTime.API.getTime### {#RadioTimeAPIGetTime}
+
+getTime(success, failure)
+
+Equivalent to [Config Time](/developers/api/opml/methods/config#Time).
+
+Returns the current server-synchronized time, using your timezone offset.
+
+Raises the [loading](#CustomEventLoading) with a parameter of "status_sync_time".
+
+##RadioTime.player## {#RadioTimePlayer}
+
+Audio playback on the web is a little thorny, like video before YouTube.  Since RadioTime does not control the format of the streams in its directory, the directory includes many kinds of playlists, container formats, and encodings.  To learn more about these details, including recommendations of formats to prioritize, please see >>>
+
+RadioTime.js includes player implementations for Flash, CE-HTML, and [Songbird](http://getsongbird.com/).  The Flash player supports >>>, while support in CE-HTML and Songbird is based on the supplier.  >>>
+
+Player selection occurs when RadioTime.init is called and is dependent on the host browser environment.  Once a player is selected, it implements the interface described below.
+
+###RadioTime.player.formats###
+
+A read-only array of [formats](http://inside.radiotime.com/developers/api/opml#streams) supported by the player.
+
+###RadioTime.player.next###
+
+Advances the player to the next item in the playlist.  If no next item is available, this is equivalent to calling stop.
+
+###RadioTime.player.playerName###
+
+A short string identifying which player was selected.  This is useful for debugging purposes.  The default players are named "flash", "ce", and "songbird".  If you choose to supply your own player, please assign a playerName in its implementation.
+
+###RadioTime.player.startPlaylist###
+
+RadioTime.player.startPlaylist(playlistUrl)
+
+Used to start playing a playlist, generally based on the URL of an outline[@type='audio'].
+
+###RadioTime.player.play###
+
+If passed no parameters, resumes playing of a paused/stopped playlist.
+
+If passed a URL, plays that URL as a single-item playlist.
+
+###RadioTime.player.pause###
+
+Pauses playback.
+
+###RadioTime.player.stop###
+
+Stops playback.
+
+###Supplying your own player###
+
+If you would like to implement your own player, it is possible with the current implementation -- [just let us know](mailto:development@radiotime.com) and we'll document this further.
+
+##RadioTime.schedule##
+
+RadioTime.js includes some convenience functions around time and station scheduling.  Display of schedule information is, of course, time-sensitive, so internally, RadioTime.js synchronizes its time with the RadioTime service, respecting the host environment's time zone, but correcting for any variation of the host clock with respect to the API.
+
+###RadioTime.schedule.init##
+
+In order to begin receiving station scheduling information, subscribe to the ["schedule"](#RadioTimeEventSchedule) and/or ["scheduleProgress"](#RadioTimeEventMediaProgress) events (described below) and call RadioTime.schedule.init with a station guide_id (i.e. s1000).
+
+The custom ["schedule"](#CustomEventsSchedule] event will be raised once immediately after the init call, and once per schedule change (i.e. when a new program begins).  The custom ["scheduleProgress"](#CustomEventsScheduleProgress) event is raised once per second, and is useful for timeline displays.
+
+###RadioTime.schedule.stopUpdates###
+
+stopUpdates (which takes no parameters) should be called in order to stop receiving the schedule-related events.
+
+RadioTime.schedule can only be running for one station at a time, and calling RadioTime.schedule.init implicitly stops updates on any prior station.
+
+##RadioTime.history## {#RadioTimeHistory}
+
+Typically in a web-based audio player, you don't want to unload the web page upon user interaction, because doing so would also unload an audio player in the same page.  
+
+This can be addressed with popup windows or IFrames, but each have usability problems.  Instead, RadioTime.history offers a couple choices for allowing navigation while remaining within a single DOM instance: "internal" or "hash".
+
+Choose opts["history"] == "hash" if the user has access to browser chrome, specifically the back/forward/reload buttons.  Choose "internal" if not.  If you prefer to provide your own player continuity, or you don't plan on playing audio, you should choose "internal".
+
+You must choose which form of history support you prefer when you call [RadioTime.init]{#RadioTimeInit}.  If you do use history support, you must also supply opts["onHistoryChange"] a function to be called on history transitions.
+
+Normal user interaction should result in a call to RadioTime.history.add.  A history transition occurs when the back or forward button of the browser is clicked, or when RadioTime.history.back() is called.
+
+
+###RadioTime.history.add###
+
+History entries in normal browser usage are created by user navigation, and form a basis for the user to undo or go back.  In your application, when such an interaction occurs, you should store information relevant to that transition.
+
+For example, you may wish to store the category ID that a user was browsing prior to choosing s specific station, or the search term before a specific search result.
+
+Whatever information you choose to store can be placed into history by passing that object to RadioTime.history.add.
+
+###onHistoryChange###
+
+The function you supply as RadioTime.init opts.onHistoryChange should be able to receive the data you supplied in history.add and restore the application to its previous state.
+
+###RadioTime.history.back###
+
+This removes an item from history and calls onHistoryChange.
+
+###RadioTime.history.last###
+
+This returns the most recent object stored with history.add.  It does not affect the history tracking.
+
+###RadioTime.history.reset###
+
+With "internal" history, this resets history, but does not call onHistoryChange.
+
+>>>Alexey said restore support is buggy, but I'm not sure what needs fixing.
+###RadioTime.history.createRestorePoint###
+
+###RadioTime.history.restore###
+
+##RadioTime.event## {#RadioTimeEvent}
+
+RadioTime.event implements a lightweight cross-browser eventing system similar to [DOM events](http://www.w3.org/TR/DOM-Level-2-Events/events.html), but supporting events related to playback and API response loading.  It does not support [bubbling](http://www.w3.org/TR/DOM-Level-2-Events/events.html#Events-flow-bubbling) but does support object-specific dispatch.  For example, an event "e" might be fired many times, but only a few times in relation to a specific object.
+
+Passing a opts.enableEvents value of false to [RadioTime.init](#RadioTimeInit) disables events.  You may wish to do this for performance reasons.
+
+See [Custom Events](#CustomEvents) for details on the events RadioTime.js supplies.
+
+###RadioTime.event.subscribe### {#RadioTimeEventSubscribe}
+
+RadioTime.event.subscribe(*eventName*, *handler*, *forObj*)
+
+|Parameter|Description|default|
+|--|--|--|
+|eventName|string|*required*|
+|handler|function(params)|*required*|
+|forObj|limit raises to the specific object|undefined|
+
+Subscribe to all *eventName* events, to be handled by *handler*, but only for the object *forObj* (if given).
+
+Returns a handler ID, which should be retained if you later wish to unsubscribe.
+
+###RadioTime.event.raise### {#RadioTimeEventRaise}
+
+RadioTime.event.raise(*eventName*, *params*, toObj)
+
+|Parameter|Description|default|
+|--|--|--|
+|eventName|string|*required*|
+|params|An event-specific parameter object|*required*|
+|toObj|Narrows the scope of the event to a specific object|undefined|
+
+Raise an event, perhaps to only one object out of many possible recipients.
+
+If toObj is given, the handlers will be called with toObj as "this".
+
+###RadioTime.event.unsubscribe### {#RadioTimeEventUnsubscribe}
+
+RadioTime.event.unsubscribe(*handlerId*)
+
+Remove a handler using the ID returned from RadioTime.event.subscribe.
+
+##RadioTime.locale## {#RadioTimeLocale}
+
+By default, the API respects the HTTP Accept-Language header, but RadioTime.locale can be set to an [ISO 639](http://en.wikipedia.org/wiki/Lists_of_ISO_639_codes) code (such as en-US), which is then passed as the locale [global parameter](/developers/api/opml#parameters) in API requests.  See the [API locales](/developers/api/opml/methods/describe#locales) documentation for more information.
+
+##RadioTime.L## {#RadioTimeL}
+
+After calling [RadioTime.API.getLocalStrings](#RadioTimeAPIGetLocalStrings), you can use RadioTime.L to return a localized string or the given string itself.
+
+For example, if RadioTime.localStrings includes {'hello':'hola'}, RadioTime.L('hello') would return 'hola', but RadioTime.L('what') would return 'what'.
+
+
+##RadioTime.response## {#RadioTimeResponse}
+
+RadioTime.response includes a family of functions to help in interpreting and reacting to API responses.
+
+###RadioTime.response.audio### {#RadioTimeResponseAudio}
+
+audio(body)
+
+Given an API response, returns a flattened list of objects which represent audio streams.
+
+####RadioTime.response.flatten####
+
+flatten(body, *copyKey*)
+
+|Name|Value|default|
+|--|--|--|
+|body|An [outline element](/developers/api/opml/elements/outline)|required|
+|copyKey|Whether to copy parent's key attribute to children|false|
+
+Sometimes, you'll want to flatten the nesting that's included in the API responses.  
+
+RadioTime.resonse.flatten returns a flat Array containing the original outline and all children.
+
+Some outline elements (@type=text|link) have key attributes which are useful for programmatic processing, and flattening loses the parent/child context necessary for correct processing.  If you'd prefer to preserve the parent's key on child elements, you can pass copyKey = true.
+
+###RadioTime.response.station### {#RadioTimeResponseStation}
+
+station(body)
+
+Given an API response, returns a flattened list of objects which represent stations.
+
+###Ancillary###
+
+####Time####
+
+As part of initialization, the offset of the client's time with respect to the server's time is determined.  
+
+ * RadioTime.gmtOffset is the number of minutes from GMT the client's timezone is in.
+ * RadioTime.tzName is a string name for the detected time zone.
+ * RadioTime.timeCorrection is the number of milliseconds from server time the client's time is from the server's time, within the detected time zone.
+ * RadioTime.now() returns a Date object synchronized with the server's time.
+ * RadioTime.formatTime() returns a string version of the current time, based on RadioTime.useAMPM.
+
+
+####RadioTime.getLogoUrl####
+
+getLogoUrl(guideId, *logoSize*, *logoFormat*)
+
+|Name|Value|default|
+|--|--|--|
+|guideId|Station or Guide ID|required|
+|logoSize|"square", "small", "normal"|"normal"|
+|logoFormat|"png", "gif"|"png"|
+
+Given a station or program ID, this returns the URL for a PNG logo.
+
+####RadioTime.getTuneUrl####
+
+getTuneUrl(id)
+
+  Given a ID, returns a URL string equivalent to a [Station Tune](/developers/api/opml/methods/tune#TuneStation).
+
+
+####RadioTime.makeId####
+
+RadioTime.makeId()
+
+Returns a large random number for use in IDs.
+
+####RadioTime.merge####
+
+ RadioTime.merge(target, source, *useSuper*)
+
+ |Name|Value|
+ |target|The object to merge to|
+ |source|The attributes to merge from|
+ |useSuper|Whether to support superclass methods|
+
+ RadioTime.merge implements a sort of class-based inheritance.  For each attribute on source, it is copied to target if target does not already have an attribute of that name.  if useSuper is true, then the overridden attribute on source is made available via target.callSuper(attributeName).
+
+ Since this function operates on objects, it can also be used to merge dictionaries, e.g.
+  
+ * x = {'a':'subclass a', 'b':'subclass b'}
+ * y = {'a':'superclass a', 'c':'superclass c'}
+ * RadioTime.merge(x, y)
+ * x.a === 'subclass a'
+ * x.b === 'subclass b'
+ * x.c === 'superclass c'
+
+####RadioTime.subs####
+
+RadioTime.subs(str, pairs)
+
+|Name|Value|
+|--|--|
+|str|A template string|
+|pairs|An object mapping from placeholders to values|
+
+Implements a small template system useful for localizing and substituting HTML fragments for use with e.g. innerHTML.
+
+If a string contains %(x)%, it is substituted with:
+
+ * pairs[x]
+
+If not found, and x starts with "label_", then it is replaced with:
+ 
+ * RadioTime.L(x)
+
+If not found, and the string contains %(a ? b : c)% is replaced with:
+  
+ * b if pairs[a] is true, otherwise c
+
+####RadioTime.cookie####
+
+Implements some convenience functions over [cookies](http://en.wikipedia.org/wiki/HTTP_cookie).
+
+#####RadioTime.cookie.save#####
+
+RadioTime.cookie.save(name, value, days)
+
+|Name|Value|
+|--|--|
+|name|The name of the cookie|
+|value|The value to store|
+|days|How many days to store it|
+
+Saves a value under a cookie name.
+
+#####RadioTime.cookie.read#####
+
+RadioTime.cookie.read(name)
+
+|Name|Value|
+|--|--|
+|name|The name of the cookie to read|
+
+Reads the value of a cookie.
+
+#####RadioTime.cookie.clear#####
+
+RadioTime.cookie.clear(name)
+
+|Name|Value|
+|name|The name of the cookie to remove|
+
+Removes a specific cookie.
+
+####getUpdate####
+
+This is an adapter ship for the supplied flash player.  For internal use only.
+
+#Custom Events# {#CustomEvents}
+
+##schedule##
+  Fired when a new schedule is available, and each time the current program changes.
+
+  The parameter for this event is the result of the [API getSchedules](#RadioTimeAPIGetStationSchedule) call.
+
+
+##scheduleProgress##
+
+  The parameter for this event is the current program's start and end times passed as an object: {start: Date, end, Date}
+
+##playlistEnded##
+
+  This event is raised when a player reaches the end of its playlist.  For streams, this should not occur unless there is a stream failure, but it may occur if playing a podcast.
+
+  This event receives no parameter.
+
+##playstateChanged##
+
+  This event is raised by the player implementation upon transitions.  
+
+  The parameter is the state the player is entering and is player dependent, but at a minimum, the following states must be raised: "stopped", "playing", "paused".
+
+##loading##
+  This event is raised by the API before each asynchronous call.
+
+  The parameter to this event is a string whose value depends on the type of load.  See the [RadioTime.API documentation](#RadioTimeAPI) for specific values.
+
+##loaded##
+
+  This event is raised after a successful API network call, regardless of whether the API status was successful.
+
+  This event receives no parameter.  
+
+##failed##
+
+  This event is raised after a failed API network call.
+
+  This event receives no parameter.
+
+##localStrings## {#CustomEventLocalStrings}
+
+  This event is raised after getLocalStrings and should be used to notify the library if RadioTime.localStrings is manually updated.
+
+  This event receives no parameter.
+
+##flashEvent##
+
+	flashEvent is raised by the Flash player implementation.  Details will be documented in the future.
+
+#Debugging#
+
+If you need to debug your RadioTime.js application, here are some helpful tips:
+ 
+  * Pass opts.verbose = true to RadioTime.init so that the library itself writes debug information.
+  * Make sure window.console (or an element with ID radiotime_log is available for RadioTime.debug to write to.
+  * Use [browser developer tools](http://www.sitepoint.com/blogs/2008/06/17/in-browser-development-tools-firebug-still-king/) where available.
+  * Liberally use [RadioTime.debug](#RadioTimeDebug) in your application.
+  * Make sure to supply *failure* callbacks in your API calls.
+
+</html>

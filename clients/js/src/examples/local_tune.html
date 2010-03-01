@@ -1,0 +1,114 @@
+<html>
+<head>
+	<title>RadioTime.js example</title>
+	<style>
+	#stations { 
+		float: left;
+	}
+	#stations li {
+		border-left: 3px solid green;
+		padding-left: 2px;
+		margin-bottom: 5px;
+	}
+	</style>
+</head>
+<body>
+	<!--
+		TODO: use slippy coords (like getlatlon.com code) for RadioTime.latlon
+		TODO: textbox to manually put in a latlon for testing.
+		TODO: checkbox to derive from window.geolocation where available
+	-->
+
+	<!--Used by the library.-->
+	<div id="rt_transport" style="display:hidden;"></div>
+	<h1>RadioTime.js example - Local stations</h1>
+	<!--Used to display player status-->
+	<h2 id="player">Loading</h2>
+	<h3>Please choose a station below.</h3>
+	<!--Used to list the local stations-->
+	<ul id="stations">
+	</ul>
+<script src="/rt-tools/js/radiotime.js"></script>
+<!--Just for making the examples concise, not needed by RadioTime.js.-->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script>
+//<!--
+var partnerId = 'Fz$khfEf'; //Register your own at http://RadioTime.com/services.aspx
+var playing = false;
+$(window).load(function() {
+	//Initialize the library with our partnerId, 
+	//	using HTML container rt_transport, 
+	//	and enabling verbose output.
+	RadioTime.init(partnerId, "rt_transport", "/rt-tools/", {'verbose':true});	
+	
+	//Use playstateChanged events to synchronize the display with the audio playback.
+	RadioTime.event.subscribe("playstateChanged", function(state) { 
+		switch(state) {
+			case "playing":
+				playing = true;
+				$("#player").text("Playing (click to pause)");
+				break;
+			case "stopped":
+			case "paused":
+				$("#player").text("Stopped");
+				playing = false;
+				break
+		}
+	})
+	
+	//Get the local stations (based off the IP, since we didn't pass opts.latlon to .init above).
+	RadioTime.API.getCategory(
+		function(body, head) {
+			//Strip the response to just the station nodes..
+			var stations = RadioTime.response.station(body).slice(0,20);
+	
+			//Grab the HTML station container, and ensure it's empty..
+			var stationList = $("#stations");
+			stationList.children().remove();
+	
+			//Stash the station ID (from guide_id), and hook up a click handler to play the related TuneUrl.
+			for (var i=0;i < stations.length; i++) { 
+				console.log(stations[i].text);
+				var li = $(RadioTime.subs("<li stationId='%(guide_id)%'>%(text)%</li>", stations[i]));
+				li.click(function() {
+					$("#player").text("Starting stream...");					
+					play($(this).attr("stationId"));					
+				});
+				//Add this station to the list.
+				stationList.append(li);
+			}
+		},
+		function() {
+			RadioTime.debug("Failed to get local.");
+		},
+		"local"
+	);
+
+})
+
+
+function play(stationId) {
+	RadioTime.loadJSON(RadioTime.getTuneUrl(stationId),
+		function(playlist) {
+			RadioTime.debug(playlist);
+			RadioTime.player.startPlaylist(playlist);
+		},
+		function() {
+			RadioTime.debug("Failed to tune station " + stationId);
+		}
+	);
+}
+
+//Play or pause the playback based on the current status.
+$("#player").click(function() {
+	if (playing) {
+		RadioTime.player.stop();
+	} else {
+		RadioTime.player.play();
+	}
+});		
+
+//-->
+</script>
+</body>
+</html>
