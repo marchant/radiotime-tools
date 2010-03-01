@@ -2,7 +2,7 @@
 <head>
 <base href="http://inside.radiotime.com/">
 </head>
-
+<!-- Maintained at radiotime-tools/clients/js/docs/core.markdown.txt -->
 #Summary#
 
 RadioTime provides a thorough directory of audio stations and program schedules, logos and identifiers by supporting selection via location, search, and categorization.
@@ -41,7 +41,10 @@ See the examples directory for sample code using RadioTime.js.
 An alias for document.getElementById.
 
 ##RadioTime.debug## {#RadioTimeDebug}
+
 If opts.verbose is true, RadioTime.debug(...) issues library debugging information (via [window.console](http://getfirebug.com/logging) or an element with ID "radiotime_log".
+
+Pass any number of arguments.
 
 ##RadioTime.init## {#RadioTimeInit}
 
@@ -51,9 +54,9 @@ RadioTime.init(partnerId, containerId, path, *opts*)
 
 |Parameter|Description|default|
 |--|--|--|
-|partnerId|[your partner ID](#requirements)|*required*|
-|containerId|A valid HTML ID|*required*|
-|path|A full or relative URL from the host page to the path containing RadioTime.js itself.|*required|
+|partnerId|[your partner ID](#requirements)|required|
+|containerId|A valid HTML ID|required|
+|path|A full or relative URL from the host page to the path containing RadioTime.js itself.|required|
 |opts.env|"beta" to use our Dev environment|"stable"|
 |opts.formats|An array of [formats](http://inside.radiotime.com/developers/api/opml#streams) to base responses on if no player is used.|RadioTime.player.formats|
 |opts.useAMPM|Whether to display AM/PM or 24-hour times|true|
@@ -73,7 +76,7 @@ path is used internally to create URLs from the host document to the URL for Rad
 
 opts.formats is only used if opts.noPlayer is true; otherwise, the selected player's supported formats are used.  If opts.noPlayer is true but opts.formats is not passed, [wma and flash](http://inside.radiotime.com/developers/api/opml#streams) are used.
 
-##RadioTime.latlon## {{#RadioTimeLatLon}
+##RadioTime.latlon## {#RadioTimeLatLon}
 
 If set to a string with latitude and longitude in a string-delimited format, e.g. "32.547,-97.383", this is passed as an explicit location for local API calls.  If not set, the user's IP is used for location.
 
@@ -84,6 +87,7 @@ RadioTime.loadJSON is a used by all the RadioTime.API functions to make requests
 RadioTime.loadJSON(url, success, failure)
 
 |Name|Value|
+|--|--|
 |url|The API URL to request|
 |success|See [RadioTime.API](#RadioTimeAPI)|
 |failure|See [RadioTime.API](#RadioTimeAPI)|
@@ -101,6 +105,7 @@ The success function receives two parameters - the body and the head of the JSON
 RadioTime.js includes the following [global parameters](http://inside.radiotime.com/developers/api/opml#parameters) on each request:
 
 |Name|Value|
+|--|--|
 |partnerId|init(partnerId)|
 |serial|radiotime_serial cookie|
 |formats|init(...,opts.formats)|
@@ -332,6 +337,10 @@ Plays or resumes playing a stream.
 
 RadioTime.player.play(*url*)
 
+|Name|Value|default|
+|--|--|--|
+|url|A stream URL to play|Resume playing a previously-paused stream|
+
 If passed no parameters, resumes playing of a paused/stopped playlist.  If passed a URL, plays that URL as a single-item playlist.
 
 ###RadioTime.player.pause###
@@ -364,9 +373,9 @@ RadioTime.schedule.init(stationId)
 |--|--|
 |stationId|A station ID, e.g. s1000|
 
-In order to begin receiving station scheduling information, subscribe to the ["schedule"](#RadioTimeEventSchedule) and/or ["scheduleProgress"](#RadioTimeEventMediaProgress) events (described below) and call RadioTime.schedule.init with a station guide_id (i.e. s1000).
+In order to begin receiving station scheduling information, subscribe to the ["schedule"](#RadioTimeEventSchedule) and/or ["scheduleProgress"](#RadioTimeEventScheduleProgress) events (described below) and call RadioTime.schedule.init with a station guide_id (i.e. s1000).
 
-The custom ["schedule"](#CustomEventsSchedule] event will be raised once immediately after the init call, and once per schedule change (i.e. when a new program begins).  The custom ["scheduleProgress"](#CustomEventsScheduleProgress) event is raised once per second, and is useful for timeline displays.
+The custom ["schedule"](#CustomEventsSchedule) event will be raised once immediately after the init call, and once per schedule change (i.e. when a new program begins).  The custom ["scheduleProgress"](#CustomEventsScheduleProgress) event is raised once per second, and is useful for timeline displays.
 
 ###RadioTime.schedule.stopUpdates###
 
@@ -384,7 +393,7 @@ This can be addressed with popup windows or IFrames, but each have usability pro
 
 Choose opts["history"] == "hash" if the user has access to browser chrome, specifically the back/forward/reload buttons.  Choose "internal" if not.  If you prefer to provide your own player continuity, or you don't plan on playing audio, you should choose "internal".
 
-You must choose which form of history support you prefer when you call [RadioTime.init]{#RadioTimeInit}.  If you do use history support, you must also supply opts["onHistoryChange"] a function to be called on history transitions.
+You must choose which form of history support you prefer when you call [RadioTime.init](#RadioTimeInit).  If you do use history support, you must also supply opts["onHistoryChange"] a function to be called on history transitions.
 
 Normal user interaction should result in a call to RadioTime.history.add.  A history transition occurs when the back or forward button of the browser is clicked, or when RadioTime.history.back() is called.
 
@@ -513,7 +522,7 @@ RadioTime.response.audio(body)
 
 Given an API response, returns a flattened list of objects which represent audio streams.
 
-####RadioTime.response.flatten####
+###RadioTime.response.flatten###
 
 Flatten the tree of objects into a simple array.
 
@@ -536,9 +545,9 @@ RadioTime.response.station(body)
 
 Given an API response, returns a flattened list of objects which represent stations.
 
-###Ancillary###
+##Ancillary##
 
-####Time####
+###Time###
 
 As part of initialization, the offset of the client's time with respect to the server's time is determined.  
 
@@ -549,7 +558,7 @@ As part of initialization, the offset of the client's time with respect to the s
  * RadioTime.formatTime(*time*) returns a string version of the given or current time, based on RadioTime.useAMPM.
 
 
-####RadioTime.getLogoUrl####
+###RadioTime.getLogoUrl###
 
 Get a related logo.
 
@@ -564,7 +573,7 @@ RadioTime.getLogoUrl(guideId, *logoSize*, *logoFormat*)
 Given a station or program ID, this returns the URL for a logo.
 
 
-####RadioTime.getTuneUrl(id)####
+###RadioTime.getTuneUrl(id)###
 
 Get the URL for a [Tune call](/developers/api/opml/methods/tune).
 
@@ -572,19 +581,20 @@ RadioTime.getTuneUrl(id)
 
 Given a ID, returns a URL string equivalent to a [Station Tune](/developers/api/opml/methods/tune#TuneStation).
   
-####RadioTime.makeId####
+###RadioTime.makeId###
 
 Get a unique number for use in IDs.
 
 RadioTime.makeId()
 
-####RadioTime.merge####
+###RadioTime.merge###
 
 Merge one object's properties into another's.
 
 RadioTime.merge(target, source, *useSuper*)
 
 |Name|Value|
+|--|--|
 |target|The object to merge to|
 |source|The attributes to merge from|
 |useSuper|Whether to support superclass methods|
@@ -600,7 +610,7 @@ Since this function operates on objects, it can also be used to merge dictionari
  * x.b === 'subclass b'
  * x.c === 'superclass c'
 
-####RadioTime.subs####
+###RadioTime.subs###
 
 RadioTime.subs(str, pairs)
 
@@ -623,11 +633,11 @@ If not found, and the string contains %(a ? b : c)% is replaced with:
   
  * b if pairs[a] is true, otherwise c
 
-####RadioTime.cookie####
+###RadioTime.cookie###
 
 Implements some convenience functions over [cookies](http://en.wikipedia.org/wiki/HTTP_cookie).
 
-#####RadioTime.cookie.save#####
+####RadioTime.cookie.save####
 
 Save a value to a cookie.
 
@@ -639,7 +649,7 @@ RadioTime.cookie.save(name, value, days)
 |value|The value to store|
 |days|How many days to store it|
 
-#####RadioTime.cookie.read#####
+####RadioTime.cookie.read####
 
 Read a value from a cookie.
 
@@ -651,54 +661,55 @@ RadioTime.cookie.read(name)
 
 Reads the value of a cookie.
 
-#####RadioTime.cookie.clear#####
+####RadioTime.cookie.clear####
 
 Remove a specific cookie.
 
 RadioTime.cookie.clear(name)
 
 |Name|Value|
+|--|--|
 |name|The name of the cookie to remove|
 
 
-####getUpdate####
+###getUpdate###
 
 This is an adapter ship for the supplied flash player.  For internal use only.
 
 #Custom Events# {#CustomEvents}
 
-##schedule##
+##schedule## {#CustomEventSchedule}
   Fired when a new schedule is available, and each time the current program changes.
 
   The parameter for this event is the result of the [API getSchedules](#RadioTimeAPIGetStationSchedule) call.
 
-##scheduleProgress##
+##scheduleProgress## {#CustomEventScheduleProgress}
   Fired once per second while RadioTime.schedule is in use.
   
   The parameter for this event is the current program's start and end times passed as an object: {start: Date, end, Date}
 
-##playlistEnded##
+##playlistEnded## {#CustomEventPlaylistEnded}
   Fired when a player reaches the end of its playlist.  For streams, this should not occur unless there is a stream failure, but it may occur when the end of an on-demand segment is reached.
 
   This event receives no parameter.
 
-##playstateChanged##
+##playstateChanged## {#CustomEventPlaystateChanged}
 
   Fired by the player implementation upon playback transitions.
 
   The parameter is the state the player is entering and is player dependent, but at a minimum, the following states must be raised: "stopped", "playing", "paused".
 
-##loading##
+##loading## {#CustomEventLoading}
   Fired by the API before each asynchronous call.
 
   The parameter to this event is a string whose value depends on the type of load.  See the [RadioTime.API documentation](#RadioTimeAPI) for specific values.
 
-##loaded##
+##loaded## {#CustomEventLoaded}
   Fired after a successful API network call, regardless of whether the API status was successful.
 
   This event receives no parameter.  
 
-##failed##
+##failed## {#CustomEventFailed}
   Fired after a failed API network call.
 
   This event receives no parameter.
@@ -708,9 +719,9 @@ This is an adapter ship for the supplied flash player.  For internal use only.
 
   This event receives no parameter.
 
-##flashEvent##
+##flashEvent## {#CustomEventFlashEvent}
 
-	Fired by the Flash player implementation.  Details will be documented later.
+  Fired by the Flash player implementation.  Details will be documented later.
 
 #Debugging#
 
