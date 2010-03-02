@@ -674,7 +674,7 @@ RadioTime.cookie.clear(name)
 
 ###getUpdate###
 
-This is an adapter ship for the supplied flash player.  For internal use only.
+This is an adapter shim for the supplied flash player.  For internal use only.
 
 #Custom Events# {#CustomEvents}
 
@@ -721,7 +721,7 @@ This is an adapter ship for the supplied flash player.  For internal use only.
 
 ##flashEvent## {#CustomEventFlashEvent}
 
-  Fired by the Flash player implementation.  Details will be documented later.
+  Fired by the Flash player implementation, and consumed by the RadioTime.player Flash support.  
 
 #Debugging#
 
