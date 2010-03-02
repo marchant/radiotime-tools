@@ -1066,30 +1066,6 @@ var RadioTime = {
 			}
 		}
 	},
-	subs: function(str, pairs) {
-		pairs = pairs || {};
-		// substitute vars
-		var out = str.replace(/%\((\w+)\)%/ig, function(match, p1){
-			if (typeof pairs[p1] != 'undefined') {
-				return pairs[p1];
-			}
-			else {
-				if (p1.indexOf("label_") == 0) {
-					return RadioTime.L(p1);
-				} else {
-					return "";
-				}
-			}
-		});
-		// handle contitional statements %<condition>?<value if true>:<value if false>
-		out = out.replace(/%\((\w+)\?([^:]*)\:(.*?)\)%/ig, function(match, p1, p2, p3){
-			if (pairs[p1])
-				return p2;
-			else
-				return p3;
-		});
-		return out;
-	},
 	makeId: function() {
 		return 1*(Math.random().toString().replace('.', ''));
 	},

@@ -95,10 +95,10 @@ function getLocal() {
 			//Stash the station ID (from guide_id), and hook up a click handler to play the related TuneUrl.
 			for (var i=0;i < stations.length; i++) { 
 				console.log(stations[i].text);
-				var li = $(RadioTime.subs("<li stationId='%(guide_id)%'>%(text)%</li>", stations[i]));
+				var li = $("<li stationId='" + stations[i].guide_id + "'>" + stations[i].text + "</li>");
 				li.click(function() {
 					$("#player").text("Starting stream...");					
-					play($(this).attr("stationId"));					
+					play($(this).attr("stationId"));
 				});
 				//Add this station to the list.
 				stationList.append(li);

@@ -610,29 +610,6 @@ Since this function operates on objects, it can also be used to merge dictionari
  * x.b === 'subclass b'
  * x.c === 'superclass c'
 
-###RadioTime.subs###
-
-RadioTime.subs(str, pairs)
-
-|Name|Value|
-|--|--|
-|str|A template string|
-|pairs|An object mapping from placeholders to values|
-
-Implements a small template system which is useful for localizing and substituting HTML fragments for use with e.g. innerHTML.
-
-If a string contains %(x)%, it is substituted with:
-
- * pairs[x]
-
-If not found, and x starts with "label_", then it is replaced with:
- 
- * RadioTime.L(x)
-
-If not found, and the string contains %(a ? b : c)% is replaced with:
-  
- * b if pairs[a] is true, otherwise c
-
 ###RadioTime.cookie###
 
 Implements some convenience functions over [cookies](http://en.wikipedia.org/wiki/HTTP_cookie).
