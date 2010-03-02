@@ -310,7 +310,7 @@ var RadioTime = {
 									RadioTime.debug("player next");
 									RadioTime.player.next();
 								}
-								RadioTime.debug("status", params.arg);
+								RadioTime.debug("flashEvent status", params.arg);
 								RadioTime.event.raise("playstateChanged", RadioTime.player.states[params.arg]);
 								break;
 							case "progress":

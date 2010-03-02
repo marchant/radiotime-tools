@@ -1,6 +1,11 @@
 <html>
 <head>
 	<title>RadioTime.js example</title>
+	<script>
+	//<!--
+	var partnerId = 'Fz$khfEf'; //Register your own at http://RadioTime.com/services.aspx
+	//-->
+	</script>
 	<style>
 	#stations { 
 		float: left;
@@ -10,12 +15,18 @@
 		padding-left: 2px;
 		margin-bottom: 5px;
 	}
+	#map {
+		width: 800px;
+		height: 400px;
+		float:right;
+	}
+	#instructions {
+		float:right
+	}
 	</style>
 </head>
 <body>
 	<!--
-		TODO: use slippy coords (like getlatlon.com code) for RadioTime.latlon
-		TODO: textbox to manually put in a latlon for testing.
 		TODO: checkbox to derive from window.geolocation where available
 	-->
 
@@ -24,17 +35,27 @@
 	<h1>RadioTime.js example - Local stations</h1>
 	<!--Used to display player status-->
 	<h2 id="player">Loading</h2>
-	<h3>Please choose a station below.</h3>
 	<!--Used to list the local stations-->
-	<ul id="stations">
-	</ul>
+	<ul id="stations"></ul>
+	
+	<h3 id="instructions">Initially shows local stations based on your IP.  Move the map to see other locations.  Click a station to play it.</h3>
+	<div id="map"></div>
+
 <script src="/radiotime-tools/js/radiotime.js"></script>
 <!--Just for making the examples concise, not needed by RadioTime.js.-->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-<script>
-//<!--
-var partnerId = 'Fz$khfEf'; //Register your own at http://RadioTime.com/services.aspx
-var playing = false;
+
+<!--
+  This Google Maps key is for localhost; you'll need to change it for other domains.
+  You can get your own here: http://code.google.com/apis/maps/signup.html
+-->
+<script src="http://www.google.com/jsapi?key=ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQcSOGmiixENvtTH313vIgQ4X1LYBSDZW5glZCCklLKePmjvJ8YN_LpPA" type="text/javascript">
+</script>
+<script type="text/javascript">
+google.load('maps', '2'); // Load version 2 of the Maps API
+
+var timer = null;
+
 $(window).load(function() {
 	//Initialize the library with our partnerId, 
 	//	using HTML container rt_transport, 
@@ -55,7 +76,12 @@ $(window).load(function() {
 				break
 		}
 	})
-	
+
+	setUpMap();	
+	getLocal();
+})
+
+function getLocal() {
 	//Get the local stations (based off the IP, since we didn't pass opts.latlon to .init above).
 	RadioTime.API.getCategory(
 		function(body, head) {
@@ -77,15 +103,50 @@ $(window).load(function() {
 				//Add this station to the list.
 				stationList.append(li);
 			}
+			
+			if (0 == stations.length) {
+				stationList.append($("<li stationId='0'>Sorry, no stations in this location.</li>"));
+			}
 		},
 		function() {
 			RadioTime.debug("Failed to get local.");
 		},
 		"local"
-	);
+	);	
+}
 
-})
-
+function setUpMap() {
+	//Code from getlatlon.com
+	window.gmap = new google.maps.Map2(document.getElementById('map'));
+	gmap.addControl(new google.maps.LargeMapControl());
+	gmap.addControl(new google.maps.MapTypeControl());
+	gmap.enableContinuousZoom();
+	gmap.enableScrollWheelZoom()
+	
+	if (google.loader.ClientLocation) {
+		gmap.setCenter(
+                new google.maps.LatLng(
+                    google.loader.ClientLocation.latitude,
+                    google.loader.ClientLocation.longitude
+                ), 8
+            );
+	} else {
+		gmap.setCenter(new google.maps.LatLng(37.788, -122.036), 6);
+	};
+	    
+	google.maps.Event.addListener(gmap, "move", function() {
+		if (timer) {
+			clearTimeout(timer);
+			timer = null;
+		}
+		timer = setTimeout(function() {
+			var center = gmap.getCenter();
+			RadioTime.latlon = [center.lat(), center.lng()].join(',');
+			getLocal();
+		}, 1000);
+	});
+	
+}
 
 function play(stationId) {
 	RadioTime.API.tune(
