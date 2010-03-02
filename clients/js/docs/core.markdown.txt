@@ -1,8 +1,8 @@
 <html>
 <head>
-<base href="http://inside.radiotime.com/">
 </head>
 <!-- Maintained at radiotime-tools/clients/js/docs/core.markdown.txt -->
+<!-- Published to http://inside.radiotime.com/developers/tools/radiotime-js-documentation/-->
 #Summary#
 
 RadioTime provides a thorough directory of audio stations and program schedules, logos and identifiers by supporting selection via location, search, and categorization.
