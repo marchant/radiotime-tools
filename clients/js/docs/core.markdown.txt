@@ -70,9 +70,9 @@ RadioTime.init(partnerId, containerId, path, *opts*)
 
 partnerId is a string that uniquely identifies your application.
 
-containerId is an HTML element that RadioTime.js can use for internal operations (currently player embedding and script tags used for API transport).
+containerId must identify an HTML element that RadioTime.js can use for internal operations (currently player embedding and script tags used for API transport).
 
-path is used internally to create URLs from the host document to the URL for RadioTime.js.  This is used to reference other files which RadioTime.js requires, such as the flash player.  For example, if your host page was http://example.com and you placed the RadioTime.js source at http://example.com/js/RadioTime.js, then *path* should be either "http://examplecom/js/" or "js/".
+path is used internally to create URLs from the host document to the URL for RadioTime.js.  This is used to reference other files which RadioTime.js requires, such as the flash player.  For example, if your host page was http://example.com and you placed the RadioTime.js source at http://example.com/rt-tools/RadioTime.js, then *path* should be either "http://example.com/rt-tools/" or "rt-tools/".
 
 opts.formats is only used if opts.noPlayer is true; otherwise, the selected player's supported formats are used.  If opts.noPlayer is true but opts.formats is not passed, [wma and flash](http://inside.radiotime.com/developers/api/opml#streams) are used.
 

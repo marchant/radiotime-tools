@@ -7,8 +7,9 @@
 	//-->
 	</script>
 	<style>
-	#stations { 
-		float: left;
+	#results {
+		float: right;
+		min-width: 400px;
 	}
 	#stations li {
 		border-left: 3px solid green;
@@ -16,12 +17,12 @@
 		margin-bottom: 5px;
 	}
 	#map {
-		width: 800px;
+		width: 600px;
 		height: 400px;
-		float:right;
+		float: left;
 	}
 	#instructions {
-		float:right
+		float: left;
 	}
 	</style>
 </head>
@@ -33,13 +34,17 @@
 	<!--Used by the library.-->
 	<div id="rt_transport" style="display:hidden;"></div>
 	<h1>RadioTime.js example - Local stations</h1>
-	<!--Used to display player status-->
-	<h2 id="player">Loading</h2>
-	<!--Used to list the local stations-->
-	<ul id="stations"></ul>
-	
-	<h3 id="instructions">Initially shows local stations based on your IP.  Move the map to see other locations.  Click a station to play it.</h3>
-	<div id="map"></div>
+
+	<div id="location">
+		<p id="instructions">Stations are initially shown based on your IP.  Move the map to see stations around the map's center.  Click a station to play it.</p>
+		<div id="results">
+			<!--Used to display player status-->
+			<h3 id="player">Loading</h3>
+			<!--Used to list the local stations-->
+			<ul id="stations"></ul>
+		</div>
+		<div id="map"></div>
+	</div>
 
 <script src="/radiotime-tools/js/radiotime.js"></script>
 <!--Just for making the examples concise, not needed by RadioTime.js.-->
