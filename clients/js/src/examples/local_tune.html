@@ -60,6 +60,8 @@
   		ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQcSOGmiixENvtTH313vIgQ4X1LYBSDZW5glZCCklLKePmjvJ8YN_LpPA
   inside.radiotime.com:
   		ABQIAAAAIj0IQagPwLTE-M-cwppq3hScRDmIpgR4xcsQYaCOmLnmHrlMZhTo7mwJe-cSso9uEMVBEULLmj_WNQ
+  radiotime-badges.s3.amazonaws.com:
+  		ABQIAAAAIj0IQagPwLTE-M-cwppq3hTevgAwpYcmllKiEbrm3L0vBt-n0BREyVUP7-wU_soNPKAikmCDYSfIyQ
 -->
 <script src="http://www.google.com/jsapi?key=ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQcSOGmiixENvtTH313vIgQ4X1LYBSDZW5glZCCklLKePmjvJ8YN_LpPA" type="text/javascript"></script>
 
@@ -93,8 +95,10 @@
 	
 	function getLocal() {
 		//Get the local stations
-		//This is initially based off the IP, since we didn't pass opts.latlon to .init above, 
-		// but will use RadioTime.latlon if it's set by adjusting the map (Google Maps code below).
+		//This is initially based off the IP, since we didn't 
+		// pass opts.latlon to .init above, 
+		// but will use RadioTime.latlon if it's set by adjusting 
+		// the map (Google Maps code below).
 		RadioTime.API.getCategory(
 			function(body, head) {
 				//Strip the response to just the station nodes.
@@ -106,7 +110,7 @@
 		
 				//Stash the station ID (from guide_id) and hook up a click handler to play the related TuneUrl.
 				for (var i=0;i < stations.length; i++) { 
-					console.log(stations[i].text);
+					RadioTime.debug(stations[i].text);
 					var li = $("<li stationId='" + stations[i].guide_id + "'>" + stations[i].text + "</li>");
 					li.click(function() {
 						$("#player").text("Starting stream...");
@@ -187,7 +191,7 @@
 //-->
 </script>
 <div style="clear:both"> 
-<p>Please see <a href="http://inside.radiotime.com/developers/">RadioTime's development site</a> for more information.</p>
+<p>Please see <a href="http://code.google.com/p/radiotime-tools/">radiotime-tools</a> for more information.</p>
 </div>
 </body>
 </html>
