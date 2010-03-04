@@ -7,8 +7,11 @@
 	//-->
 	</script>
 	<style>
+	#example {
+		max-width: 900px
+	}
 	#results {
-		float: right;
+		float: left;
 		min-width: 400px;
 	}
 	#stations li {
@@ -17,12 +20,9 @@
 		margin-bottom: 5px;
 	}
 	#map {
-		width: 600px;
+		width: 400px;
 		height: 400px;
-		float: left;
-	}
-	#instructions {
-		float: left;
+		float: right;
 	}
 	</style>
 </head>
@@ -33,18 +33,20 @@
 
 	<!--Used by the library.-->
 	<div id="rt_transport" style="display:hidden;"></div>
-	<h1>RadioTime.js example - Local stations</h1>
-
-	<div id="location">
-		<p id="instructions">Stations are initially shown based on your IP.  Move the map to see stations around the map's center.</p>
-		<div id="results">
-			<!--Used to display player status-->
-			<h3 id="player">Loading</h3>
-			<!--Used to list the local stations-->
-			<p>Click a station to play it.</p>
-			<ul id="stations"></ul>
+	<h1 id="banner">RadioTime.js example</h1>
+	<h2 id="instructions">Stations are initially shown based on your IP.  Move the map to see stations around the map's center.</h2>
+	<div id="example">
+		<div>
+			
+			<div style="clear:both" id="map">Please update your API key to make the map work on your site.</div>		
+			<div id="results">
+				<!--Used to display player status-->
+				<!--Used to list the local stations-->
+				<p>Click a station to play it.</p>
+				<h3 id="player">Loading</h3>
+				<ul id="stations"></ul>
+			</div>
 		</div>
-		<div id="map">Please update your API key to make the map work on your site.</div>
 	</div>
 
 <script src="/radiotime-tools/js/radiotime.js"></script>
@@ -64,7 +66,6 @@
   		ABQIAAAAIj0IQagPwLTE-M-cwppq3hTevgAwpYcmllKiEbrm3L0vBt-n0BREyVUP7-wU_soNPKAikmCDYSfIyQ
 -->
 <script src="http://www.google.com/jsapi?key=ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQcSOGmiixENvtTH313vIgQ4X1LYBSDZW5glZCCklLKePmjvJ8YN_LpPA" type="text/javascript"></script>
-
 
 <script type="text/javascript">
 //<!--
@@ -101,6 +102,10 @@
 		// the map (Google Maps code below).
 		RadioTime.API.getCategory(
 			function(body, head) {
+				RadioTime.debug("head", head);
+				$("#banner").text("RadioTime.js example" + (
+					head.title ? " - " + head.title : " - Local Radio"
+				));
 				//Strip the response to just the station nodes.
 				var stations = RadioTime.response.station(body).slice(0,20);
 		

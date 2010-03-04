@@ -1048,7 +1048,7 @@ var RadioTime = {
 			var txt = Array.prototype.slice.call(arguments).join(" ");
 		}
 		if (window.console && console.debug) {
-			console.debug(txt);
+			console.debug.apply(console, arguments);
 		} else {
 			// Can't use RadioTime.$ here because it would cause infinite recruision  
 			// and stack overflow due to the debug() call in RadioTime.$ 
