@@ -900,17 +900,9 @@ var RadioTime = {
 	},	
 	_loader: {
 		_requestTimeout: 30, // in seconds
-		_cache: {},
 		requests: {},
-		sendRequest: function(req, success, failure, retries, usecache) {
+		sendRequest: function(req, success, failure, retries) {
 			if (typeof req != 'number') { // this is a new request
-				if (usecache != undefined && usecache) {
-					if (this._cache[req] != undefined) {
-						if (success)
-							success.call(this, this._cache[req]);
-						return;
-					}
-				}
 				var reqId = RadioTime.makeId();
 					
 				this.requests[reqId] = {
@@ -922,7 +914,6 @@ var RadioTime = {
 					_reqUrl: (req.url.indexOf("callback=") < 0) ? req.url + "callback=RadioTime._loader.requests[" + reqId + "].init" : req.url,
 					init: function(data) {
 						this._requestCompleted = true;
-						RadioTime._loader._cache[this._req] = data;
 						if (this._callback) {
 							this._callback.call(this, data);
 						}
