@@ -798,7 +798,7 @@ var RadioTime = {
 						"hasAccount": true,
 						"text": data[0].text
 					}
-					success.call(this, out);				
+					success.call(this, out);
 				}, function(){
 					var u = RadioTime._formatReq("Register.aspx");
 					RadioTime.loadJSON(u, function(data){
@@ -809,12 +809,12 @@ var RadioTime = {
 						success.call(this, out);
 					}, failure);
 			});
-		},
+		}, 
 		getLocalStrings: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading');
 			var url = RadioTime._formatReq("Config.ashx?c=contentQuery");
 			RadioTime.loadJSON(url, function(data) {
-			RadioTime._applyLocalStrings(data);
+				RadioTime._applyLocalStrings(data);
 				success(data);
 			}, failure);
 		},
