@@ -1,0 +1,189 @@
+<html>
+<head>
+	<title>RadioTime.js example</title>
+	<script>
+	//<!--
+	var partnerId = 'Fz$khfEf'; //Register your own at http://RadioTime.com/services.aspx
+	//-->
+	</script>
+	<style>
+	#results {
+		float: right;
+		min-width: 400px;
+	}
+	#stations li {
+		border-left: 3px solid green;
+		padding-left: 2px;
+		margin-bottom: 5px;
+	}
+	#map {
+		width: 600px;
+		height: 400px;
+		float: left;
+	}
+	#instructions {
+		float: left;
+	}
+	</style>
+</head>
+<body>
+	<!--
+		TODO: checkbox to derive from window.geolocation where available
+	-->
+
+	<!--Used by the library.-->
+	<div id="rt_transport" style="display:hidden;"></div>
+	<h1>RadioTime.js example - Local stations</h1>
+
+	<div id="location">
+		<p id="instructions">Stations are initially shown based on your IP.  Move the map to see stations around the map's center.</p>
+		<div id="results">
+			<!--Used to display player status-->
+			<h3 id="player">Loading</h3>
+			<!--Used to list the local stations-->
+			<p>Click a station to play it.</p>
+			<ul id="stations"></ul>
+		</div>
+		<div id="map"></div>
+	</div>
+
+<script src="/radiotime-tools/js/radiotime.js"></script>
+<!-- jQuery is used to make the examples concise, but it's not needed by RadioTime.js. -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+
+<!--
+  Google Maps requires an API key for each domain.   If you're not running this from localhost, 
+  please register your own key here: http://code.google.com/apis/maps/signup.html
+  and change the key in the jsapi? call.
+  
+  localhost:
+  		ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQcSOGmiixENvtTH313vIgQ4X1LYBSDZW5glZCCklLKePmjvJ8YN_LpPA
+  inside.radiotime.com:
+  		ABQIAAAAIj0IQagPwLTE-M-cwppq3hScRDmIpgR4xcsQYaCOmLnmHrlMZhTo7mwJe-cSso9uEMVBEULLmj_WNQ
+-->
+<script src="http://www.google.com/jsapi?key=ABQIAAAAyYu8a7AdbfUctK3zwwu_2hQcSOGmiixENvtTH313vIgQ4X1LYBSDZW5glZCCklLKePmjvJ8YN_LpPA" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+//<!--
+	$(window).ready(function() {
+		//Initialize the library with our partnerId, 
+		//	using HTML container rt_transport, 
+		//	and enabling verbose output for debugging.
+		RadioTime.init(partnerId, "rt_transport", "/radiotime-tools/", {'verbose':true});	
+		
+		//Use playstateChanged events to synchronize the display with the audio playback.
+		RadioTime.event.subscribe("playstateChanged", function(state) { 
+			switch(state) {
+				case "playing":
+					playing = true;
+					$("#player").text("Playing (click to pause)");
+					break;
+				case "stopped":
+				case "paused":
+					$("#player").text("Stopped");
+					playing = false;
+					break
+			}
+		})
+	
+		getLocal();
+	})
+	
+	function getLocal() {
+		//Get the local stations
+		//This is initially based off the IP, since we didn't pass opts.latlon to .init above, 
+		// but will use RadioTime.latlon if it's set by adjusting the map (Google Maps code below).
+		RadioTime.API.getCategory(
+			function(body, head) {
+				//Strip the response to just the station nodes.
+				var stations = RadioTime.response.station(body).slice(0,20);
+		
+				//Grab the HTML station container, and ensure it's empty.
+				var stationList = $("#stations");
+				stationList.children().remove();
+		
+				//Stash the station ID (from guide_id) and hook up a click handler to play the related TuneUrl.
+				for (var i=0;i < stations.length; i++) { 
+					console.log(stations[i].text);
+					var li = $("<li stationId='" + stations[i].guide_id + "'>" + stations[i].text + "</li>");
+					li.click(function() {
+						$("#player").text("Starting stream...");
+						play($(this).attr("stationId"));
+					});
+					//Add this station to the list.
+					stationList.append(li);
+				}
+				
+				if (0 == stations.length) {
+					stationList.append($("<li stationId='0'>Sorry, no stations in this location.</li>"));
+				}
+			},
+			function() {
+				RadioTime.debug("Failed to get local.");
+			},
+			"local"
+		);	
+	}
+	
+	function play(stationId) {
+		RadioTime.API.tune(
+			function(playlist) {
+				RadioTime.debug(playlist);
+				RadioTime.player.startPlaylist(playlist);
+			},
+			function() {
+				RadioTime.debug("Failed to tune station " + stationId);
+			},
+			stationId
+		);
+	}
+	
+	//Play or pause the playback based on the current status.
+	$("#player").click(function() {
+		if (playing) {
+			RadioTime.player.stop();
+		} else {
+			RadioTime.player.play();
+		}
+	});		
+	
+	//Set up a map to make choosing a location easy.
+	google.load('maps', '2', {'callback':	setUpMap}); // Load version 2 of the Maps API	
+	var timer = null;
+	function setUpMap() {
+		//Code adapted from getlatlon.com
+		window.gmap = new google.maps.Map2(document.getElementById('map'));
+		gmap.addControl(new google.maps.LargeMapControl());
+		gmap.addControl(new google.maps.MapTypeControl());
+		gmap.enableContinuousZoom();
+		gmap.enableScrollWheelZoom()
+		
+		if (google.loader.ClientLocation) {
+			gmap.setCenter(
+	                new google.maps.LatLng(
+	                    google.loader.ClientLocation.latitude,
+	                    google.loader.ClientLocation.longitude
+	                ), 8
+	            );
+		} else {
+			gmap.setCenter(new google.maps.LatLng(37.788, -122.036), 6);
+		};
+		    
+		//Set RadioTime.latlon when the map is moved to a new location.
+		google.maps.Event.addListener(gmap, "move", function() {
+			if (timer) { //delay location fetches until moves are completed.
+				clearTimeout(timer);
+				timer = null;
+			}
+			timer = setTimeout(function() {
+				var center = gmap.getCenter();
+				RadioTime.latlon = [center.lat(), center.lng()].join(',');
+				getLocal();
+			}, 1000);
+		});
+	}
+//-->
+</script>
+</body>
+</html>
