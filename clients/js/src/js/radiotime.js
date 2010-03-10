@@ -800,7 +800,7 @@ var RadioTime = {
 					}
 					success.call(this, out);
 				}, function(){
-					var u = RadioTime._formatReq("Register.aspx");
+					var u = RadioTime._formatReq("Account.ashx?c=claim", true);
 					RadioTime.loadJSON(u, function(data){
 						var out = {
 							"hasAccount": false,
