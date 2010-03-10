@@ -798,9 +798,9 @@ var RadioTime = {
 						"hasAccount": true,
 						"text": data[0].text
 					}
-					success.call(this, out);				
+					success.call(this, out);
 				}, function(){
-					var u = RadioTime._formatReq("Register.aspx");
+					var u = RadioTime._formatReq("Account.ashx?c=claim", true);
 					RadioTime.loadJSON(u, function(data){
 						var out = {
 							"hasAccount": false,
@@ -809,12 +809,12 @@ var RadioTime = {
 						success.call(this, out);
 					}, failure);
 			});
-		},
+		}, 
 		getLocalStrings: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading');
 			var url = RadioTime._formatReq("Config.ashx?c=contentQuery");
 			RadioTime.loadJSON(url, function(data) {
-			RadioTime._applyLocalStrings(data);
+				RadioTime._applyLocalStrings(data);
 				success(data);
 			}, failure);
 		},
@@ -1048,7 +1048,7 @@ var RadioTime = {
 			var txt = Array.prototype.slice.call(arguments).join(" ");
 		}
 		if (window.console && console.debug) {
-			console.debug(txt);
+			console.debug.apply(console, arguments);
 		} else {
 			// Can't use RadioTime.$ here because it would cause infinite recruision  
 			// and stack overflow due to the debug() call in RadioTime.$ 
