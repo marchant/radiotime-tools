@@ -1,6 +1,3 @@
-<html>
-<head>
-</head>
 <!-- Maintained at radiotime-tools/clients/js/docs/core.markdown.txt -->
 <!-- Published to http://inside.radiotime.com/developers/tools/radiotime-js-documentation/-->
 #Summary#
@@ -64,9 +61,11 @@ RadioTime.init(partnerId, containerId, path, *opts*)
 |opts.history|See [RadioTime.history](#RadioTimeHistory)|"singlePage"|
 |opts.onHistoryChange|See [RadioTime.history](#RadioTimeHistory)|undefined|
 |opts.latlon|The user's location, expressed as a string, e.g. "32.547,-97.383"|location derived from IP address|
+|opts.exactLocation|Strictly respect latlon, even if it falls in an area where IP address might give better results|false|
 |opts.player|Your player implementation (see [RadioTime.player](#RadioTimePlayer) below)|undefined|
 |opts.noPlayer|Set to true if audio playback is not needed.  The broadest [stream selection](http://inside.radiotime.com/developers/guide/solutions/streaming) can then be shown.|false|
 |opts.verbose|Turns on debugging output via [RadioTime.debug](#RadioTimeDebug)|false|
+
 
 partnerId is a string that uniquely identifies your application.
 
