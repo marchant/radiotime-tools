@@ -2,7 +2,7 @@
 <!-- Published to http://inside.radiotime.com/developers/tools/radiotime-js-documentation/-->
 #Summary#
 
-RadioTime provides a thorough directory of audio stations and program schedules, logos and identifiers by supporting selection via location, search, and categorization.
+RadioTime provides a thorough directory of audio stations and show schedules, logos and identifiers by supporting selection via location, search, and categorization.
 
 [RadioTime.js](http://code.google.com/p/radiotime-tools/) is a MIT-licensed JavaScript client to [RadioTime](http://radiotime.com/)'s [JSON/OPML API](http://inside.radiotime.com/developers/api/opml).
 
@@ -16,14 +16,14 @@ RadioTime.js requires a browser host environment (i.e. access to the [DOM](http:
 
 To use RadioTime.js, you will also need a free RadioTime partner ID, which you can obtain by [creating an account on RadioTime.com](https://radiotime.com/Enroll/QuickEnroll.aspx?redir=/Services.aspx), then [creating a partner ID](http://radiotime.com/services.aspx).  Using a Partner ID provides the following benefits:
 
- * Raises [API limits](http://inside.radiotime.com/developers/api/opml/security-model#limits) placed on anonymous usage
- * Allows us to provide better support for your application
+ * Raises [API limits](http://inside.radiotime.com/developers/api/opml/security-model#limits) placed on anonymous usage.
+ * Allows us to provide better support for your application.
  * Allows application-specific server-side configuration and [reserved features](http://inside.radiotime.com/developers/api/opml#reserved).
- * Allows anonymous presets (based on your partner ID and a serial number) without user registration.
+ * Allows anonymous presets (based on your partner ID and a serial number) without account registration.
 
 Due to current implementation limitations, you can only use one instance of RadioTime.js per page.
 
-A [persistent cookie](http://en.wikipedia.org/wiki/HTTP_cookie) named radiotime_serial is created to allow us to gather rough usage statistics and to provide persistent per-user presets (without user registration) via the API.
+A [persistent cookie](http://en.wikipedia.org/wiki/HTTP_cookie) named radiotime_serial is created to allow us to gather rough usage statistics and to provide persistent per-account presets (without explicit registration) via the API.
 
 Additionally, if you would like to include audio playback, a media player is necessary.  Several [are provided](#RadioTimePlayer), but you can supply your own as well.
 
@@ -178,37 +178,37 @@ Raises the [loading](#CustomEventLoading) with a parameter of "status_loading_sc
 
 ###RadioTime.API.getProgramListeningOptions### {#RadioTimeAPIGetProgramListeningOptions}
 
-Equivalent to [Tune Program](/developers/api/opml/methods/tune/#program).
+Equivalent to [Tune Show](/developers/api/opml/methods/tune/#program).
 
 RadioTime.API.getProgramListeningOptions(success, failure, programId)
 
 |Name|Value|
 |--|--|
-|programId|A program ID, e.g. p17|
+|showId|A show ID, e.g. p17|
 
 Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
 
 ###RadioTime.API.describe### {#RadioTimeAPIDescribe}
 
-Equivalent to [Describe Station or Describe Program](/developers/api/opml/methods/describe#station).
+Equivalent to [Describe Station or Describe Show](/developers/api/opml/methods/describe#station).
 
 RadioTime.API.describe(success, failure, id)
 
 |Name|Value|
 |--|--|
-|id|A program or station ID, e.g. p17 or s1000|
+|id|A show or station ID, e.g. p17 or s1000|
 
 Raises the [loading](#CustomEventLoading) with a parameter of "status_finding_stations".
 
 ###RadioTime.API.getOptions### {#RadioTimeAPIGetOptions}
 
-Equivalent to [Station or Program](/developers/api/opml/methods/options).
+Equivalent to [Station or Show](/developers/api/opml/methods/options).
 
 RadioTime.API.getOptions(success, failure, id)
 
 |Name|Value|
 |--|--|
-|id|A program or station ID, e.g. p17 or s1000|
+|id|A show or station ID, e.g. p17 or s1000|
 
 Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
 
@@ -216,23 +216,23 @@ Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
 
 RadioTime.API.getRelated(success, failure, id)
 
-Equivalent to [Browse Station or Program](/developers/api/opml/methods/browse#station).
+Equivalent to [Browse Station or show](/developers/api/opml/methods/browse#station).
 
 |Name|Value|
 |--|--|
-|id|A program or station ID, e.g. p17 or s1000|
+|id|A show or station ID, e.g. p17 or s1000|
 
 Raises the [loading](#CustomEventLoading) with a parameter of "status_loading".
 
 ###RadioTime.API.addPreset### {#RadioTimeAPIAddPreset}
 
-Adds a station or program to presets.
+Adds a station or show to presets.
 
 RadioTime.API.addPreset(success, failure, id)
 
 |Name|Value|
 |--|--|
-|id|A program or station ID, e.g. p17 or s1000|
+|id|A show or station ID, e.g. p17 or s1000|
 
 Equivalent to [Preset](/developers/api/opml/methods/preset) with c=add.
 
@@ -240,14 +240,14 @@ Raises the [loading](#CustomEventLoading) with a parameter of "status_adding_pre
 
 ###RadioTime.API.removePreset### {#RadioTimeAPIRemovePreset}
 
-Removes a station or program from presets.
+Removes a station or show from presets.
 Equivalent to [Preset](/developers/api/opml/methods/preset) with c=remove.
 
 RadioTime.API.removePreset(success, failure, id)
 
 |Name|Value|
 |--|--|
-|id|A program or station ID, e.g. p17 or s1000|
+|id|A show or station ID, e.g. p17 or s1000|
 
 
 Raises the [loading](#CustomEventLoading) with a parameter of "status_removing_preset". 
@@ -273,21 +273,21 @@ RadioTime.API.tune(success, failure, id)
 
 |Name|Value|
 |--|--|
-|id|A program or station ID, e.g. p17 or s1000|
+|id|A show or station ID, e.g. p17 or s1000|
 
-Whether given a program or a station, the response is a list of candidate streams, restricted to the supported formats.  If given a program, it must also be live.
+Whether given a show or a station, the response is a list of candidate streams, restricted to the supported formats.  If given a show, it must also be live.
 
 ###RadioTime.API.getAccountStatus### {#RadioTimeAPIGetAccountStatus}
 
-Determine whether a user's account is tied to a RadioTime.com account.
+Determine whether the application's user has a RadioTime.com account.
 
 RadioTime.API.getAccountStatus(success, failure)
 
 Checks whether the client's serial number is tied to a RadioTime.com account.  Success receives an object {hasAccount: Boolean, text: String}.
 
-If hasAccount, then text is the associated RadioTime.com account name.  Otherwise, the text is a codeword the user can use to associate the account. 
+If hasAccount, then text is the associated RadioTime.com account name.  Otherwise, the text is a codeword. 
 
-The main benefit of joining an account is shared presets between multiple devices (even across partners).  An app user with an existing account can add your device using the codeword at [the device registration page](http://radiotime.com/mydevice).
+The main benefit of joining an account is shared presets between multiple devices (even across partners).  An application user with an existing account can add your device using the codeword at [the device registration page](http://radiotime.com/mydevice).
 
 Raises the [loading](#CustomEventLoading) with a parameter of "status_checking_account".
 
@@ -374,7 +374,7 @@ RadioTime.schedule.init(stationId)
 
 In order to begin receiving station scheduling information, subscribe to the ["schedule"](#RadioTimeEventSchedule) and/or ["scheduleProgress"](#RadioTimeEventScheduleProgress) events (described below) and call RadioTime.schedule.init with a station guide_id (i.e. s1000).
 
-The custom ["schedule"](#CustomEventsSchedule) event will be raised once immediately after the init call, and once per schedule change (i.e. when a new program begins).  The custom ["scheduleProgress"](#CustomEventsScheduleProgress) event is raised once per second, and is useful for timeline displays.
+The custom ["schedule"](#CustomEventsSchedule) event will be raised once immediately after the init call, and once per schedule change (i.e. when a new show begins).  The custom ["scheduleProgress"](#CustomEventsScheduleProgress) event is raised once per second, and is useful for timeline displays.
 
 ###RadioTime.schedule.stopUpdates###
 
@@ -569,7 +569,7 @@ RadioTime.getLogoUrl(guideId, *logoSize*, *logoFormat*)
 |logoSize|"square", "small", "normal"|"normal"|
 |logoFormat|"png", "gif"|"png"|
 
-Given a station or program ID, this returns the URL for a logo.
+Given a station or show ID, this returns the URL for a logo.
 
 
 ###RadioTime.getTuneUrl(id)###
@@ -655,17 +655,17 @@ This is an adapter shim for the supplied flash player.  For internal use only.
 #Custom Events# {#CustomEvents}
 
 ##schedule## {#CustomEventSchedule}
-  Fired when a new schedule is available, and each time the current program changes.
+  Fired when a new schedule is available, and each time the current show changes.
 
   The parameter for this event is the result of the [API getSchedules](#RadioTimeAPIGetStationSchedule) call.
 
 ##scheduleProgress## {#CustomEventScheduleProgress}
   Fired once per second while RadioTime.schedule is in use.
   
-  The parameter for this event is the current program's start and end times passed as an object: {start: Date, end, Date}
+  The parameter for this event is the current show's start and end times passed as an object: {start: Date, end, Date}
 
 ##playlistEnded## {#CustomEventPlaylistEnded}
-  Fired when a player reaches the end of its playlist.  For streams, this should not occur unless there is a stream failure, but it may occur when the end of an on-demand segment is reached.
+  Fired when a player reaches the end of its playlist.  For streams, this should not occur unless there is a stream failure, but it may occur when the end of an on-demand topic is reached.
 
   This event receives no parameter.
 
