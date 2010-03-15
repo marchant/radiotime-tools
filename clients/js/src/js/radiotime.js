@@ -106,12 +106,7 @@ var RadioTime = {
 	},
 	_initEventHandlers: function() {
 		RadioTime.event.subscribe("playstateChanged", function(state) {
-			state = parseInt(state);
-			if (isNaN(state))
-				return;
-			if (!RadioTime.player.states[state])
-				return;
-			RadioTime.player.currentState = RadioTime.player.states[state];
+			RadioTime.player.currentState = state;
 			
 			switch (RadioTime.player.currentState) {
 				case "playing":
@@ -204,7 +199,7 @@ var RadioTime = {
 			implementation: { 
 				init: function(container) {
 					this.playerName = "ce";
-					this.formats = ["mp3", "flash"];
+					this.formats = ["mp3"];
 					var d = document.createElement("div");
 					this._id = RadioTime.makeId();
 					d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
@@ -218,11 +213,10 @@ var RadioTime = {
 					this._player.play(1);
 					var _this = this;
 					this._player.onPlayStateChange = function() {
-						//jgd//RadioTime.debug(_this._player.playState);
 						if (5 == _this._player.playState) {
 							RadioTime.player.next();
 						}
-						RadioTime.event.raise("playstateChanged", _this._player.playState);
+						RadioTime.event.raise("playstateChanged", RadioTime.player.states[_this._player.playState]);
 					}
 				},
 				stop: function() {
@@ -419,7 +413,7 @@ var RadioTime = {
 			}
 			if (this.nowPlayingIndex < 0) { // Nothing is playing
 				this._fetchReg = setTimeout(function(){
-					_this.fetch(_this.guide_id);
+					_this._fetch(_this.guide_id);
 				}, this._fetchInterval*1000);
 			}
 			if (this.nowPlayingIndex != oldNowPlayingIndex) {
