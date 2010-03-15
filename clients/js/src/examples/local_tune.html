@@ -74,7 +74,7 @@
 		//Initialize the library with our partnerId, 
 		//	using HTML container rt_transport, 
 		//	and enabling verbose output for debugging.
-		RadioTime.init(partnerId, "rt_transport", "/radiotime-tools/", {'verbose':true});	
+		RadioTime.init(partnerId, "rt_transport", "/radiotime-tools/", {'verbose':true, 'exactLocation':true});	
 		
 		//Use playstateChanged events to synchronize the display with the audio playback.
 		RadioTime.event.subscribe("playstateChanged", function(state) { 
