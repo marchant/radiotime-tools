@@ -712,5 +712,3 @@ If you need to debug your RadioTime.js application, here are some helpful tips:
   * Use [browser developer tools](http://www.sitepoint.com/blogs/2008/06/17/in-browser-development-tools-firebug-still-king/) where available.
   * Liberally use [RadioTime.debug](#RadioTimeDebug) in your application.
   * Make sure to supply *failure* callbacks in your API calls.
-
-</html>
