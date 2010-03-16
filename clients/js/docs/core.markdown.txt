@@ -390,12 +390,16 @@ Typically in a web-based audio player, you don't want to unload the web page upo
 
 This can be addressed with popup windows or IFrames, but each have usability problems.  Instead, RadioTime.history offers a couple choices for allowing navigation while remaining within a single DOM instance: "internal" or "hash".
 
-Choose opts["history"] == "hash" if the user has access to browser chrome, specifically the back/forward/reload buttons.  Choose "internal" if not.  If you prefer to provide your own player continuity, or you don't plan on playing audio, you should choose "internal".
-
-You must choose which form of history support you prefer when you call [RadioTime.init](#RadioTimeInit).  If you do use history support, you must also supply opts["onHistoryChange"] a function to be called on history transitions.
+You must choose which form of history support you prefer when you call [RadioTime.init](#RadioTimeInit).  If you do use history support, you must also supply opts["onHistoryChange"] a function to be called on history transitions.  Choose opts["history"] == "hash" if the user has access to browser chrome, specifically the back/forward/reload buttons.  Choose "internal" if not.  If you prefer to provide your own player continuity, or you don't plan on playing audio, you should choose "internal".
 
 Normal user interaction should result in a call to RadioTime.history.add.  A history transition occurs when the back or forward button of the browser is clicked, or when RadioTime.history.back() is called.
 
+Finally, when using opts["history"] == "hash", you must also include a reference to the rsh.js included in this library, e.g.
+    
+    <script src="rt-tools/js/rsh.js"></script>
+    <script src="rt-tools/js/radiotime.js"></script>
+    
+This rsh.js is a minified and slightly modified version of [Really Simple History](http://code.google.com/p/reallysimplehistory/).
 
 ###RadioTime.history.add###
 
