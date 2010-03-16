@@ -49,6 +49,7 @@
 		</div>
 	</div>
 
+<script src="/radiotime-tools/js/rsh.js"></script>
 <script src="/radiotime-tools/js/radiotime.js"></script>
 <!-- jQuery is used to make the examples concise, but it's not needed by RadioTime.js. -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
@@ -69,13 +70,28 @@
 
 <script type="text/javascript">
 //<!--
-
+	var fromHistory = false;
 	$(window).ready(function() {
 		//Initialize the library with our partnerId, 
 		//	using HTML container rt_transport, 
 		//	and enabling verbose output for debugging.
-		RadioTime.init(partnerId, "rt_transport", "/radiotime-tools/", {'verbose':true, 'exactLocation':true});	
-		
+		RadioTime.init(partnerId, "rt_transport", "/radiotime-tools/", {
+			'verbose':true, 'exactLocation':true, 
+			'history':'hash', 
+			'onHistoryChange': function(state) {
+				fromHistory = true;
+				RadioTime.debug("historyChange", state);
+				if (state.lat) {
+					RadioTime.latlon = [state.lat, state.lng].join(',');
+					gmap.setCenter(new google.maps.LatLng(state.lat, state.lng), state.zoom);
+				} else {
+					gmap.setCenter(new google.maps.LatLng(37.788, -122.036), 6);
+				}
+				getLocal();
+				fromHistory = false;
+			}
+			});
+		RadioTime.history.add({});
 		//Use playstateChanged events to synchronize the display with the audio playback.
 		RadioTime.event.subscribe("playstateChanged", function(state) { 
 			switch(state) {
@@ -171,17 +187,23 @@
 		
 		if (google.loader.ClientLocation) {
 			gmap.setCenter(
-	                new google.maps.LatLng(
-	                    google.loader.ClientLocation.latitude,
-	                    google.loader.ClientLocation.longitude
-	                ), 8
-	            );
+					new google.maps.LatLng(
+						google.loader.ClientLocation.latitude,
+						google.loader.ClientLocation.longitude
+					), 8
+				);
 		} else {
 			gmap.setCenter(new google.maps.LatLng(37.788, -122.036), 6);
 		};
-		    
+		
 		//Set RadioTime.latlon when the map is moved to a new location.
 		google.maps.Event.addListener(gmap, "move", function() {
+			if (fromHistory) {
+				var center = gmap.getCenter();
+				RadioTime.latlon = [center.lat(), center.lng()].join(',');
+				getLocal();
+				return;
+			}
 			if (timer) { //delay location fetches until moves are completed.
 				clearTimeout(timer);
 				timer = null;
@@ -189,6 +211,7 @@
 			timer = setTimeout(function() {
 				var center = gmap.getCenter();
 				RadioTime.latlon = [center.lat(), center.lng()].join(',');
+				RadioTime.history.add({'lat':center.lat(),'lng':center.lng(),'zoom':gmap.getZoom()});
 				getLocal();
 			}, 1000);
 		});

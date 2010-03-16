@@ -71,6 +71,16 @@ var RadioTime = {
 			RadioTime._syncTime();
 		}, 3*1000);
 	},
+	_addScript: function(url, onload) {
+		var head = document.getElementsByTagName('head')[0];
+		var script = document.createElement('script');
+		script.setAttribute('src', url);
+		script.onload = function() {
+			head.removeChild(script);
+			onload();
+		}
+		head.appendChild(script);
+	},
 	/* Platform key contants
 	 * need to define these so that it won't break while testing in a browser 
 	 * also it provides a nice way to emulate
