@@ -58,7 +58,7 @@ RadioTime.init(partnerId, containerId, path, *opts*)
 |opts.formats|An array of [formats](http://inside.radiotime.com/developers/api/opml#streams) to base responses on if no player is used.|RadioTime.player.formats|
 |opts.useAMPM|Whether to display AM/PM or 24-hour times|true|
 |opts.enableEvents|Whether to raise the [events described below](#RadioTimeEvents).|true|
-|opts.history|See [RadioTime.history](#RadioTimeHistory)|"singlePage"|
+|opts.history|See [RadioTime.history](#RadioTimeHistory)|"internal"|
 |opts.onHistoryChange|See [RadioTime.history](#RadioTimeHistory)|undefined|
 |opts.latlon|The user's location, expressed as a string, e.g. "32.547,-97.383"|location derived from IP address|
 |opts.exactLocation|Strictly respect latlon, even if it falls in an area where IP address might give better results|false|
