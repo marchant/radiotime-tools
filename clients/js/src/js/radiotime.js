@@ -190,12 +190,7 @@ var RadioTime = {
 			this._play(this._url);
 		},
 		isSupported: function() {
-			return true;
-			return ( //hack to add iphone support via quicktime by skipping flash
-				//FIXME: make player detection not need this.  :-)
-				typeof RadioTime.player._player != "undefined" && 
-				(RadioTime.player._player.doStop || RadioTime.player._player.play)
-			);
+			return !!this._play;
 		}
 	},
 	addPlayer: function(player) {
@@ -237,7 +232,7 @@ var RadioTime = {
 				pause: function() {
 					if (!this._player || !this._player.play) 
 						return;
-					this._player.play();
+					this._player.play(); // this actually means 'pause' on CE!
 				},
 		
 				states: {
@@ -286,7 +281,32 @@ var RadioTime = {
 			}				
 		},
 		{
-			isSupported: function() { return true }, //FIXME: detect whether flash player is really available.
+			isSupported: function() { 
+				var f = "-", n = navigator;
+				if (n.plugins && n.plugins.length) {
+					for (var ii=0; ii<n.plugins.length; ii++) {
+						if (n.plugins[ii].name.indexOf('Shockwave Flash') != -1) {
+							f = n.plugins[ii].description.split('Shockwave Flash ')[1];
+							break;
+						}
+					}
+				} else if (window.ActiveXObject) {
+					for (var ii=10; ii>=2; ii--) {
+						try {
+							var fl = eval("new ActiveXObject('ShockwaveFlash.ShockwaveFlash." + ii + "');");
+							if (fl) { 
+								f = ii + '.0'; 
+								break; 
+							}
+						}
+						catch(e) {}
+					}
+				}
+				if (f.split(".")[0]) {
+					f = f.split(".")[0];
+				}
+				return (f > 8);
+			},
 	 		implementation:
 	 		{
 				init: function(container) {
@@ -354,6 +374,104 @@ var RadioTime = {
 					4:  "error"
 				}	
 			}
+		},{
+			isSupported: function() { 
+				// iPad-only for now
+				return /iPad/i.test(navigator.userAgent); 
+			},
+			implementation: {
+				init: function(container){
+					this.playerName = "html5";
+					this.formats = ["mp3", "aac"];
+					var d = new Audio();
+					this._id = RadioTime.makeId();
+					d.id = this._id;
+					container.appendChild(d);
+					this._player = RadioTime.$(this._id);
+					var _this = this;
+					/*
+					 * <audio> event handlers
+					 */
+					this._player.addEventListener('error', function(){
+						_this._stateChanged('error');
+					}, true);
+					this._player.addEventListener('playing', function(){
+						_this._stateChanged('playing');
+					}, true);
+					this._player.addEventListener('pause', function(){
+						_this._stateChanged('pause');
+					}, true);
+					this._player.addEventListener('ended', function(){
+						_this._stateChanged('ended');
+						RadioTime.player.next();
+					}, true);
+					this._player.addEventListener('abort', function(){
+						_this._stateChanged('abort');
+					}, true);
+					this._player.addEventListener('loadstart', function(){
+						_this._stateChanged('loadstart');
+					}, true);
+					this._player.addEventListener('seeking', function(){
+						_this._stateChanged('seeking');
+					}, true);
+					this._player.addEventListener('waiting', function(){
+						_this._stateChanged('waiting');
+					}, true);
+					this._player.addEventListener('suspend', function(){
+						_this._stateChanged('suspend');
+					}, true);
+					this._player.addEventListener('stalled', function(){
+						_this._stateChanged('stalled');
+					}, true);
+				},
+				_stateChanged: function(newstate){
+					var state = "stopped";
+					switch (newstate) {
+						case "pause":
+							state = "paused";
+							break;
+						case "stalled":
+						case "suspend":
+						case "ended":
+						case "stopped":
+							state = "stopped";
+							break;
+						case "playing":
+							state = "playing";
+							break;
+						case "loadstart":
+						case "waiting":
+						case "seeking":
+							state = "connecting";
+							break;
+						case "error":
+							state = "error";
+							break;
+					}
+					RadioTime.event.raise("playstateChanged", RadioTime.player.states[state]);
+				},
+				_play: function(url){
+					if (this._player.src != url) {
+						this._player.src = this._url;
+						this._player.load();
+					}
+					this._player.play();
+				},
+				stop: function(){
+					this._player.pause();
+				},
+				pause: function(){
+					this._player.pause();
+				},
+				states: {
+					"finished": "finished",
+					"stopped": "stopped",
+					"error": "error",
+					"playing": "playing",
+					"paused": "paused",
+					"connecting": "connecting"
+				}
+			}		
 		}
 	],
 	schedule: {
