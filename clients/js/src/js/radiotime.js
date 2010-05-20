@@ -40,22 +40,37 @@ var RadioTime = {
 		this._initKeys();
 		this._initEventHandlers();
 		
-		var supportedPlayer = false;
+		this._activePlayers = [];
+
 		if (!opts.noPlayer) {
 			for (var i = 0; i< RadioTime._players.length; i++) { 
-				if (supportedPlayer = RadioTime._players[i].isSupported()) {
-					RadioTime.merge(RadioTime.player, RadioTime._players[i].implementation);
-					break;
+				if (RadioTime._players[i].isSupported()) {
+					var p = {};
+					//RadioTime.merge(p, RadioTime.player);
+					//RadioTime.merge(p, RadioTime._players[i].implementation);
+					p = RadioTime._players[i].implementation;
+					p.init(this._container); 
+					this._activePlayers.push(p);
 				}
 			};
 		}
-		if (supportedPlayer) {
-			this.player.init(this._container);
-			this.formats = RadioTime.player.formats;
-			RadioTime.debug("Using player: " + this.player.playerName);
+		if (this._activePlayers.length > 0) {
+			RadioTime.activePlayer = this._activePlayers[0]; // for a quick test only
+			// Collect supported formats from all active players 
+			this.formats = [];
+			var f;
+			
+			for (var i = 0; i < this._activePlayers.length; i++) {
+				f = this._activePlayers[i].formats;
+				for (var j = 0; j < f.length; j++) {
+					if (!RadioTime._inArray(this.formats, f[j])) {
+						this.formats.push(f[j]);
+					}
+				}
+			}
 		} else {
 			if (!opts.noPlayer) {
-				alert("Unable to find a supported audio player");
+				RadioTime.debug("Unable to find a supported audio player");
 				RadioTime.formats = opts.formats ? opts.formats : ["mp3","wma"];
 			} else {
 				RadioTime.formats = ["mp3", "wma"];
@@ -161,12 +176,14 @@ var RadioTime = {
 		},
 		next: function() {
 			if (!this._playlist || !this._playlist.length)
-				return;
+				return false;
 			if (this._currentItem < this._playlist.length - 1) {
 				this._currentItem++;
 				this.play();
+				return true;
 			} else {
 				RadioTime.event.raise("playlistEnded");
+				return false;
 			}		
 		},
 		play: function(url) {
@@ -174,23 +191,45 @@ var RadioTime = {
 				this._playlist = [{"url":url}];
 				this._currentItem = 0;
 			}
-			var newUrl = "";
+			var newUrl = "", newPlayer = null;
 			if (this._playlist) {
 				newUrl = this._playlist[this._currentItem].url;
-				
+				newPlayer = this.pickPlayer(this._playlist[this._currentItem]);
 			}
 			// Don't stop unless the URL is different
-			if (newUrl != this._url) {
+			if (newUrl != this._url && newPlayer) {
 				this.stop();
 				this._url = newUrl;
+				RadioTime.activePlayer = newPlayer;
+				RadioTime.debug("Using player: " + RadioTime.activePlayer.playerName);
 			}
 			if (!this._url) {
 				return;
 			}
-			this._play(this._url);
+			RadioTime.activePlayer._play(this._url);
+		},
+		pickPlayer: function(data) {
+			var res = null;
+			if (this.isSupported()){
+				res = RadioTime._activePlayers[0]; // default choice
+			}
+			for (var i = 0; i < RadioTime._activePlayers.length; i++) {
+				if (data.media_type && 
+				RadioTime._inArray(RadioTime._activePlayers[i].formats, data.media_type)) {
+					res = RadioTime._activePlayers[i];
+					break;
+				}
+			}
+			return res;
+		},
+		stop: function() {
+			RadioTime.activePlayer.stop();
+		},
+		pause: function() {
+			RadioTime.activePlayer.pause();
 		},
 		isSupported: function() {
-			return !!this._play;
+			return RadioTime._activePlayers.length > 0;
 		}
 	},
 	addPlayer: function(player) {
@@ -198,6 +237,9 @@ var RadioTime = {
 	},
 	_players: [
 		{
+			/*
+			 * CE-HTML player
+			 */
 			isSupported: function() { 
 				return navigator.userAgent.match(/CE-HTML/); 
 			},
@@ -221,7 +263,7 @@ var RadioTime = {
 						if (5 == _this._player.playState) {
 							RadioTime.player.next();
 						}
-						RadioTime.event.raise("playstateChanged", RadioTime.player.states[_this._player.playState]);
+						RadioTime.event.raise("playstateChanged", _this.states[_this._player.playState]);
 					}
 				},
 				stop: function() {
@@ -247,6 +289,9 @@ var RadioTime = {
 			}
 		},
 		{
+			/*
+			 * Songbird player
+			 */
 			isSupported: function() { return window.songbird; },
 			implementation: { //FIXME: need to integrate more to do eventing based on player transitions.
 				//	var listener = { observe: function(subject, topic, data) {...}}; songbird.addListener("faceplate.playing", listener)
@@ -263,15 +308,15 @@ var RadioTime = {
 					//FIXME: switch to createMediaListFromURL? :-/
 					songbird.playURL(url);
 					//FIXME: need mediacore listener to sync w/ real state:
-					RadioTime.event.raise("playstateChanged", RadioTime.player.states[1]);
+					RadioTime.event.raise("playstateChanged", this.states[1]);
 				},
 				stop: function() {
 					songbird.stop();
-					RadioTime.event.raise("playstateChanged", RadioTime.player.states[0]);
+					RadioTime.event.raise("playstateChanged", this.states[0]);
 				},
 				pause: function() {
 					songbird.pause();
-					RadioTime.event.raise("playstateChanged", RadioTime.player.states[2]);
+					RadioTime.event.raise("playstateChanged", this.states[2]);
 				},
 				states: {
 					0:  "stopped", 
@@ -279,8 +324,10 @@ var RadioTime = {
 					2:  "paused"
 				}
 			}				
-		},
-		{
+		}, {
+			/*
+			 * Flash player
+			 */
 			isSupported: function() { 
 				var f = "-", n = navigator;
 				if (n.plugins && n.plugins.length) {
@@ -301,6 +348,9 @@ var RadioTime = {
 						}
 						catch(e) {}
 					}
+				}
+				if (f != "-") {
+					RadioTime.debug("Flash " + f + " detected");
 				}
 				if (f.split(".")[0]) {
 					f = f.split(".")[0];
@@ -324,7 +374,7 @@ var RadioTime = {
 					}
 					container.innerHTML;
 					this._player = d.firstChild;
-					//this._player = RadioTime.$(this._id);
+
 					var _this = this;
 					RadioTime.event.subscribe("flashEvent", function(params) {
 						if (_this._id != params.objectid)
@@ -336,7 +386,7 @@ var RadioTime = {
 									RadioTime.player.next();
 								}
 								RadioTime.debug("flashEvent status", params.arg);
-								RadioTime.event.raise("playstateChanged", RadioTime.player.states[params.arg]);
+								RadioTime.event.raise("playstateChanged", _this.states[params.arg]);
 								break;
 							case "progress":
 							case "position":
@@ -346,7 +396,7 @@ var RadioTime = {
 								RadioTime.debug("flash object is ready");
 								break;
 						}
-						if (params.command != "position")
+						if (params.command != "position" && params.command != "progress")
 							RadioTime.debug(params);
 					});
 				},
@@ -375,6 +425,141 @@ var RadioTime = {
 				}	
 			}
 		},{
+			/*
+			 * WMP player
+			 */
+			isSupported: function() { 
+				var n = navigator, s = false;
+				if (n.userAgent.match(/chrome/)) {
+					if (RadioTime.isTypeSupported("application/x-ms-wmp")) {
+						s = true;
+					}
+				} else	if (n.plugins && n.plugins.length) {
+					for (var ii=0; ii<n.plugins.length; ii++) {
+						if (n.plugins[ii].name.indexOf('Windows Media Player') != -1 || n.plugins[ii].name.indexOf('Windows Media') != -1) {
+							if (RadioTime.isTypeSupported("application/x-ms-wmp")) {
+								s = true;
+							}
+							break;
+						}
+					}
+				} else if (window.ActiveXObject) {
+					try {
+						var wmp = new ActiveXObject("WMPlayer.OCX.7");	
+						var f = wmp.versionInfo;
+						s = true;
+						delete wmp;
+					}
+					catch(e) {
+						s = false;
+					}
+				}
+				if (s) {
+					RadioTime.debug("Windows Media Player detected");
+				}
+				return s;
+			},	
+	 		implementation:
+	 		{
+				init: function(container) {
+					this.playerName = 'wmp';
+					this.formats = ["wma", "wmpro", "wmvoice", "mp3"];
+					var object = null;
+					try	{
+						if (window.ActiveXObject){
+							object = new ActiveXObject("WMPlayer.OCX.7");
+						} else if (window.GeckoActiveXObject){
+							object = new GeckoActiveXObject("WMPlayer.OCX.7");
+						}
+					} catch(e) {
+						object = null;
+					}
+					
+					var d = document.createElement("div");
+					container.appendChild(d);
+					d.style.position = "absolute";
+					this._id = RadioTime.makeId();
+
+					if (!object) {
+						d.innerHTML = '<embed width="1" height="1" id="' + this._id + '" type="application/x-ms-wmp"></embed>';
+					} else {
+						delete object;
+						d.innerHTML = '<object classid="CLSID:6BF52A52-394A-11d3-B153-00C04F79FAA6" width="1" height="1" id="' + this._id + '"></object>';
+					}
+					container.innerHTML;
+					this._player = d.firstChild;
+					
+					var _this = this;
+					window["OnDSErrorEvt"] = function() {
+						RadioTime.debug("WMP error occured");
+						_this._error = true;
+						RadioTime.event.raise("playstateChanged", "error");
+					}
+
+					window["OnDSPlayStateChangeEvt"] = function(newstate) {
+						if (newstate == 8) { // Media Ended
+							RadioTime.player.next();
+						}
+						if (newstate == 10 && _this._error){
+							_this._error = false;
+							RadioTime.debug("WMP 'State 10' condition");
+						}
+						RadioTime.debug("WMP state: " + newstate);
+						RadioTime.event.raise("playstateChanged", _this.states[newstate]);
+					}
+
+				},
+				_play: function(url) {
+					if (!this._player) 
+						return;
+					this._player.URL = url;
+					this._player.controls.play();
+				},
+				stop: function() {
+					if (!this._player) 
+						return;
+					this._player.controls.stop();
+				},
+				pause: function() {
+					if (!this._player) 
+						return;
+					this._player.controls.pause();
+				},
+/*	
+ * WMP playState codes reference
+ * 			
+	0	Undefined	Windows Media Player is in an undefined state.
+	1	Stopped	Playback of the current media item is stopped.
+	2	Paused	Playback of the current media item is paused. When a media item is paused, resuming playback begins from the same location.
+	3	Playing	The current media item is playing.
+	4	ScanForward	The current media item is fast forwarding.
+	5	ScanReverse	The current media item is fast rewinding.
+	6	Buffering	The current media item is getting additional data from the server.
+	7	Waiting	Connection is established, but the server is not sending data. Waiting for session to begin.
+	8	MediaEnded	Media item has completed playback.
+	9	Transitioning	Preparing new media item.
+	10	Ready	Ready to begin playing.
+	11	Reconnecting	Reconnecting to stream.		
+*/		
+				states: {
+					1:  "stopped", 
+					0:  "unknown", 
+					8:  "ended", 
+					2: 	"paused",
+					4:  "connecting", 
+					5:  "connecting",
+					6:  "connecting", 
+					7:  "connecting", 
+					9:  "connecting",
+					11: "connecting",
+					3:  "playing",
+					10: "stopped"
+				}	
+			}
+		},{
+			/*
+			 * HTML5 player
+			 */
 			isSupported: function() { 
 				// iPad-only for now
 				return /iPad/i.test(navigator.userAgent); 
@@ -448,11 +633,12 @@ var RadioTime = {
 							state = "error";
 							break;
 					}
-					RadioTime.event.raise("playstateChanged", RadioTime.player.states[state]);
+					RadioTime.debug("html5 state: " + newstate);
+					RadioTime.event.raise("playstateChanged", this.states[state]);
 				},
 				_play: function(url){
 					if (this._player.src != url) {
-						this._player.src = this._url;
+						this._player.src = url;
 						this._player.load();
 					}
 					this._player.play();
@@ -472,6 +658,128 @@ var RadioTime = {
 					"connecting": "connecting"
 				}
 			}		
+		},{
+			/*
+			 * Silverlight player
+			 */
+			isSupported: function() { 
+				var f = "-", a = null, AgControl = null;
+				var plugin = navigator.plugins["Silverlight Plug-In"];
+				try
+			    {
+				 	if (plugin) {
+						a = document.createElement("div");
+						document.body.appendChild(a);
+						if(navigator.userAgent.match(/applewebkit/))
+							a.innerHTML = '<embed type="application/x-silverlight" />';
+						else 
+							a.innerHTML = '<object type="application/x-silverlight"  data="data:," />';
+						AgControl = a.childNodes[0];
+				 	} else if (window.ActiveXObject) {
+				            var AgControl = new ActiveXObject("AgControl.AgControl");
+				    }
+					document.body.innerHTML;
+					f = AgControl.IsVersionSupported("2.0") ? "2.0" : (AgControl.IsVersionSupported("1.0") ? "1.0" : "-");
+					delete AgControl;
+				} catch (e){
+			        f = "-";
+			
+					if (plugin && plugin.description) {
+						var ver = plugin.description.split(".");
+						if (isFinite(ver[0]) && isFinite(ver[1])) {
+			
+							if (ver[0] > 0) {
+								f = ver[0] + "." + ver[1];
+							}
+						}
+					}
+			    }
+				if (a) document.body.removeChild(a);
+				if (f != "-") {
+					RadioTime.debug("Silverlight " + f + " detected");
+					// HTML page must include embedded XAML for Silverlight player
+					if (!!RadioTime.$("radiotime_xaml")) {
+						return true;
+					} else {
+						RadioTime.debug("Embedded XAML for Silverlight media player is not found. See comments in the implementation.")
+						return false;
+					}
+				} else {
+					return false;
+				}
+			},
+// add the following xaml to page HTML for silverlight player
+// <script type="text/xaml" id="radiotime_xaml"><?xml version="1.0"?><Canvas xmlns="http://schemas.microsoft.com/client/2007" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><MediaElement x:Name="media" AutoPlay="true" Width="1" Height="1"/></Canvas></script>		
+	 		implementation:
+	 		{
+				init: function(container) {
+					this.playerName = 'silverlight';
+					this.formats = ["wma", "wmpro", "wmvoice"];
+					var d = document.createElement("div");
+					container.appendChild(d);
+					d.style.position = "absolute";
+					this._id = RadioTime.makeId();
+
+					if (navigator.userAgent.match(/applewebkit/)) {
+						d.innerHTML = '<embed type="application/x-silverlight" id="' + this._id + '" width="1" height="1" source="#radiotime_xaml" onError="__slError_rt" onLoad="__slLoad_rt"/>';
+					} else {
+						d.innerHTML = '<object type="application/x-silverlight" id="' + this._id + '" width="1" height="1"  data="data:,"><param name="source" value="#radiotime_xaml"/><param name="onError" value="__slError_rt"/><param name="onLoad" value="__slLoad_rt"/></object>';
+					}
+					container.innerHTML;
+					this._player = d.firstChild;
+					
+					var _this = this;
+					window["__slError_rt"] = function(s, a) {
+						RadioTime.debug("Silverlight error: " + a.errorMessage);
+						_this._error = true;
+						RadioTime.event.raise("playstateChanged", "error");
+					}
+					window["__slLoad_rt"] = function(s, a) {
+						RadioTime.debug("Silverlight is ready");
+						_this.__player = _this._player.content.findName("media");
+						_this.__player.AddEventListener("CurrentStateChanged", function(){
+							var cs = _this.__player.CurrentState;
+							RadioTime.debug("Silverlight state: " + cs);
+							// Keep it from erasing error state immediately
+							if (_this._error && cs == "Closed") {
+								_this._error = false;
+								return;
+							} 
+							RadioTime.event.raise("playstateChanged", _this.states[cs]);
+						});
+					}
+				},
+				_play: function(url) {
+					if (!this.__player) 
+						return;
+					this.__player.Source = url;
+					this.__player.Play();
+				},
+				stop: function() {
+					if (!this.__player) 
+						return;
+					this.__player.Stop();
+				},
+				pause: function() {
+					if (!this.__player) 
+						return;
+					if (this.__player.CanPause) {
+						this.__player.Pause();
+					} else {
+						this.__player.Stop();
+					}
+				},
+				states: {
+					"Closed":  "stopped", 
+					"Unknown":  "unknown", 
+					"Stopped":  "stopped", 
+					"Paused": "paused",
+					"Buffering":  "connecting", 
+					"Opening":  "connecting", 
+					"Playing":  "playing",
+					"Error":  "error"
+				}	
+			}
 		}
 	],
 	schedule: {
@@ -484,7 +792,6 @@ var RadioTime = {
 		guide_id: null,
 		init: function(guide_id) {
 			var _this = this;
-			
 			this.stopUpdates();
 			this._fetch(guide_id);
 		},
@@ -553,8 +860,8 @@ var RadioTime = {
 				return;
 			}
 			RadioTime.event.raise("scheduleProgress", {
-				start: this.schedule[this.nowPlayingIndex].start,
-				end: this.schedule[this.nowPlayingIndex].end
+				guide_id: this.guide_id,
+				item: this.schedule[this.nowPlayingIndex]
 			});
 			if (this.schedule[this.nowPlayingIndex].end < RadioTime.now().getTime()) {
 				this._available(this.schedule);
@@ -829,6 +1136,12 @@ var RadioTime = {
 			
 		}			
 	},
+	_inArray: function(a, e) {
+		for (var i = 0; i < a.length; i++) {
+			if (a[i] == e) return true;
+		}
+		return false;
+	},
 	_isArray: function(v) {
 		return v && typeof v === 'object' && typeof v.length === 'number' &&
 			!(v.propertyIsEnumerable('length'));
@@ -899,6 +1212,11 @@ var RadioTime = {
 		},
 		getRelated: function(success, failure, id){
 			RadioTime.event.raise("loading", 'status_loading');
+			// No related for topics
+			if (RadioTime._getIdType(id) == "topic") {
+				if (failure) failure.call(null);
+				RadioTime.event.raise("failed", "");
+			}
 			RadioTime.loadJSON("Browse.ashx?id=" + id, success, failure);
 		},
 		addPreset: function(success, failure, id) {
@@ -1028,8 +1346,8 @@ var RadioTime = {
 		_requestTimeout: 30, // in seconds
 		requests: {},
 		sendRequest: function(req, success, failure, retries) {
-			if (typeof req != 'number') { // this is a new request
-				var reqId = RadioTime.makeId();
+			if (typeof this.requests[req] == 'undefined') { // this is a new request
+				var reqId = 'r' + RadioTime.makeId();
 					
 				this.requests[reqId] = {
 					_req: req,
@@ -1037,7 +1355,7 @@ var RadioTime = {
 					_callback: success != undefined ? success : null,
 					_failure: failure != undefined ? failure : null,
 					_retries: retries != undefined ? retries : 0,
-					_reqUrl: (req.url.indexOf("callback=") < 0) ? req.url + "callback=RadioTime._loader.requests[" + reqId + "].init" : req.url,
+					_reqUrl: (req.url.indexOf("callback=") < 0) ? req.url + "callback=RadioTime._loader.requests." + reqId + ".init" : req.url,
 					init: function(data) {
 						this._requestCompleted = true;
 						if (this._callback) {
@@ -1209,6 +1527,14 @@ var RadioTime = {
 				target.SUPER[i] = source[i];
 			}
 		}
+	},
+	isTypeSupported: function(mimeType) {
+		for( var i = 0; i < navigator.mimeTypes.length; i++){
+			if(navigator.mimeTypes[i].type.toLowerCase() == mimeType){
+				return navigator.mimeTypes[i].enabledPlugin;
+			}
+		}
+		return false;
 	},
 	cookie: {
 		save: function (name, value, days) {
