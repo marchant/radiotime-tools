@@ -70,7 +70,7 @@ var RadioTime = {
 			}
 		} else {
 			if (!opts.noPlayer) {
-				RadioTime.debug("Unable to find a supported audio player");
+				alert("Unable to find a supported audio player");
 				RadioTime.formats = opts.formats ? opts.formats : ["mp3","wma"];
 			} else {
 				RadioTime.formats = ["mp3", "wma"];
@@ -697,33 +697,36 @@ var RadioTime = {
 				if (a) document.body.removeChild(a);
 				if (f != "-") {
 					RadioTime.debug("Silverlight " + f + " detected");
-					// HTML page must include embedded XAML for Silverlight player
-					if (!!RadioTime.$("radiotime_xaml")) {
-						return true;
-					} else {
-						RadioTime.debug("Embedded XAML for Silverlight media player is not found. See comments in the implementation.")
-						return false;
-					}
+					return true;
 				} else {
 					return false;
 				}
-			},
-// add the following xaml to page HTML for silverlight player
-// <script type="text/xaml" id="radiotime_xaml"><?xml version="1.0"?><Canvas xmlns="http://schemas.microsoft.com/client/2007" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><MediaElement x:Name="media" AutoPlay="true" Width="1" Height="1"/></Canvas></script>		
+			},	
 	 		implementation:
 	 		{
 				init: function(container) {
 					this.playerName = 'silverlight';
 					this.formats = ["wma", "wmpro", "wmvoice"];
+					var x = document.createElement("script");
+					x.type = "text/xaml";
+					x.id = 'x' + RadioTime.makeId();
+					var xaml = '<?xml version="1.0"?><Canvas xmlns="http://schemas.microsoft.com/client/2007" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><MediaElement x:Name="media" AutoPlay="true" Width="1" Height="1"/></Canvas>';
+					if (navigator.userAgent.match(/msie/i)) {
+						x.text = xaml;
+					} else {
+						x.appendChild(document.createTextNode(xaml)); // doesn't work in IE
+					}
+					container.appendChild(x);
+
 					var d = document.createElement("div");
 					container.appendChild(d);
 					d.style.position = "absolute";
 					this._id = RadioTime.makeId();
 
-					if (navigator.userAgent.match(/applewebkit/)) {
-						d.innerHTML = '<embed type="application/x-silverlight" id="' + this._id + '" width="1" height="1" source="#radiotime_xaml" onError="__slError_rt" onLoad="__slLoad_rt"/>';
+					if (navigator.userAgent.match(/applewebkit/i)) {
+						d.innerHTML = '<embed type="application/x-silverlight" id="' + this._id + '" width="1" height="1" source="#' + x.id + '" onError="__slError_rt" onLoad="__slLoad_rt"/>';
 					} else {
-						d.innerHTML = '<object type="application/x-silverlight" id="' + this._id + '" width="1" height="1"  data="data:,"><param name="source" value="#radiotime_xaml"/><param name="onError" value="__slError_rt"/><param name="onLoad" value="__slLoad_rt"/></object>';
+						d.innerHTML = '<object type="application/x-silverlight" id="' + this._id + '" width="1" height="1"  data="data:,"><param name="source" value="#' + x.id + '"/><param name="onError" value="__slError_rt"/><param name="onLoad" value="__slLoad_rt"/></object>';
 					}
 					container.innerHTML;
 					this._player = d.firstChild;
@@ -922,7 +925,8 @@ var RadioTime = {
 	},	
 	loadJSON: function(url, onsuccess, onfailure) {
 		url = RadioTime._formatReq(url);
-		RadioTime.debug("API request: " + url.url);
+		var _url = url.url;
+		RadioTime.debug("API request: " + _url);
 		RadioTime._loader.sendRequest(url, function(data) {
 			var status = (data.head && data.head.status) ? data.head.status : "missing";
 			if (status == "200") { // Status is not returned for Register.aspx call
@@ -930,12 +934,15 @@ var RadioTime = {
 					onsuccess.call(this, data.body, data.head);
 				}
 			} else {
-				if (onfailure) onfailure.call(null, data.head);
+				if (onfailure) onfailure.call(this, data.head);
+				RadioTime.event.raise("failed", _url);
 			}
 			RadioTime.event.raise("loaded");
-			}, function() {
-				if (onfailure) onfailure.call(null);
-				RadioTime.event.raise("failed", url);
+		}, function() {
+			if (onfailure) {
+				onfailure.call(this);
+			}
+			RadioTime.event.raise("failed", _url);
 		});
 	},
 	_getIdType: function(guideId) {
@@ -1343,14 +1350,15 @@ var RadioTime = {
 		RadioTime.event.raise("localStrings");
 	},	
 	_loader: {
-		_requestTimeout: 30, // in seconds
+		_requestTimeout: 10, // in seconds
 		requests: {},
 		sendRequest: function(req, success, failure, retries) {
-			if (typeof this.requests[req] == 'undefined') { // this is a new request
+			if (typeof this.requests[req] == 'undefined' && req.url) { // this is a new request
 				var reqId = 'r' + RadioTime.makeId();
-					
+				var _this = this;	
 				this.requests[reqId] = {
 					_req: req,
+					_reqId: reqId,
 					_requestCompleted: false,
 					_callback: success != undefined ? success : null,
 					_failure: failure != undefined ? failure : null,
@@ -1361,26 +1369,23 @@ var RadioTime = {
 						if (this._callback) {
 							this._callback.call(this, data);
 						}
+						_this.clearRequest(this._reqId);
 					},
 					fail: function() {
 						if (this._failure) {
 							this._failure.call(this);
 						}
+						_this.clearRequest(this._reqId);
 					}
 				};
 			} else {
 				var reqId = req;
-				if (this.requests[reqId] == undefined)
+				if (typeof this.requests[reqId] == 'undefined')
 					return;
-				// OK
-				if (this.requests[reqId]._requestCompleted) {
-					this.clearRequest(reqId);
-					return;
-				}
+
 				// No retries left?
 				if (this.requests[reqId]._retries <= 0) {
-					this.onerror(this.requests[reqId]);
-					this.clearRequest(reqId);
+					this.requests[reqId].fail();
 					return;
 				}
 				this.requests[reqId]._retries--;
@@ -1389,12 +1394,13 @@ var RadioTime = {
 				RadioTime.$(reqId).parentNode.removeChild(RadioTime.$(reqId));
 			}
 			var s;
-			var _this = this;
 			if (this.requests[reqId]._callback) { 
 				s = document.createElement("script");
-				s.onload = function() {
-
+				s.onerror = function() {
+					_this.requests[reqId].fail();
 				}
+				s.async = "async";
+				
 			} else { // use iframe if we don't care about result
 				s = document.createElement("iframe");
 				s.style.visibility = "hidden";
@@ -1408,26 +1414,20 @@ var RadioTime = {
 			s.src = this.requests[reqId]._reqUrl;
 			RadioTime._container.appendChild(s);
 			
-			setTimeout(function() {
+			this.requests[reqId]._timeout = setTimeout(function() {
 				_this.sendRequest(reqId);
 			}, this._requestTimeout*1000);
 		},
 		clearRequest: function(reqId) {
 			if (RadioTime.$(reqId)) {
+				RadioTime.$(reqId).onerror = null;
 				RadioTime.$(reqId).parentNode.removeChild(RadioTime.$(reqId));
+			} 
+			if (this.requests[reqId]) {
+				this.requests[reqId]._timeout && clearTimeout(this.requests[reqId]._timeout);
+				
 				delete this.requests[reqId];
-			} else {
-				if (this.requests[reqId] && !this.requests[reqId]._requestCompleted) {
-					var _this = this;
-					this.requests[reqId].init = function(data){
-						RadioTime.debug("Late request arrived: " + reqId);
-						_this.clearRequest(reqId);
-					}
-				}
 			}
-		},
-		onerror: function(req) {
-			req.fail();
 		}
 	},	
 	event: {
@@ -1493,6 +1493,8 @@ var RadioTime = {
 		}
 		if (window.console && console.debug) {
 			console.debug.apply(console, arguments);
+		} else if (window.opera && opera.postError) {
+			opera.postError.apply(opera, arguments);
 		} else {
 			// Can't use RadioTime.$ here because it would cause infinite recruision  
 			// and stack overflow due to the debug() call in RadioTime.$ 

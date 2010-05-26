@@ -57,7 +57,7 @@ RadioTime.init(partnerId, containerId, path, *opts*)
 |opts.env|"beta" to use our Dev environment|"stable"|
 |opts.formats|An array of [formats](http://inside.radiotime.com/developers/api/opml#streams) to base responses on if no player is used.|RadioTime.player.formats|
 |opts.useAMPM|Whether to display AM/PM or 24-hour times|true|
-|opts.enableEvents|Whether to raise the [events described below](#RadioTimeEvents).|true|
+|opts.enableEvents|Whether to raise the [events described below](#CustomEvents).|true|
 |opts.history|See [RadioTime.history](#RadioTimeHistory)|"internal"|
 |opts.onHistoryChange|See [RadioTime.history](#RadioTimeHistory)|undefined|
 |opts.latlon|The user's location, expressed as a string, e.g. "32.547,-97.383"|location derived from IP address|
@@ -372,9 +372,9 @@ RadioTime.schedule.init(stationId)
 |--|--|
 |stationId|A station ID, e.g. s1000|
 
-In order to begin receiving station scheduling information, subscribe to the ["schedule"](#RadioTimeEventSchedule) and/or ["scheduleProgress"](#RadioTimeEventScheduleProgress) events (described below) and call RadioTime.schedule.init with a station guide_id (i.e. s1000).
+In order to begin receiving station scheduling information, subscribe to the ["schedule"](#CustomEventSchedule) and/or ["scheduleProgress"](#CustomEventScheduleProgress) events (described below) and call RadioTime.schedule.init with a station guide_id (i.e. s1000).
 
-The custom ["schedule"](#CustomEventsSchedule) event will be raised once immediately after the init call, and once per schedule change (i.e. when a new show begins).  The custom ["scheduleProgress"](#CustomEventsScheduleProgress) event is raised once per second, and is useful for timeline displays.
+The custom ["schedule"](#CustomEventSchedule) event will be raised once immediately after the init call, and once per schedule change (i.e. when a new show begins).  The custom ["scheduleProgress"](#CustomEventScheduleProgress) event is raised once per second, and is useful for timeline displays.
 
 ###RadioTime.schedule.stopUpdates###
 
@@ -447,7 +447,7 @@ RadioTime.history.reset()
 
 This does not call onHistoryChange.
 
-##RadioTime.event## {#RadioTimeEvent}
+##RadioTime.event## {#CustomEvent}
 
 RadioTime.event implements a lightweight cross-browser eventing system similar to [DOM events](http://www.w3.org/TR/DOM-Level-2-Events/events.html), but supporting events related to playback and API response loading.  It does not support [bubbling](http://www.w3.org/TR/DOM-Level-2-Events/events.html#Events-flow-bubbling) but does support object-specific dispatch.  For example, an event might be fired many times, but only a few times in relation to a specific object.
 
@@ -455,7 +455,7 @@ Passing a opts.enableEvents value of false to [RadioTime.init](#RadioTimeInit) d
 
 See [Custom Events](#CustomEvents) for details on the events RadioTime.js supplies.
 
-###RadioTime.event.subscribe### {#RadioTimeEventSubscribe}
+###RadioTime.event.subscribe### {#CustomEventSubscribe}
 
 Subscribe to a custom event.
 
@@ -469,7 +469,7 @@ RadioTime.event.subscribe(eventName, handler, *forObj*)
 
 Subscribe to all *eventName* events, to be handled by *handler*, but only for the object *forObj* (if given).  Returns a handler ID, which should be retained if you later wish to unsubscribe.
 
-###RadioTime.event.raise### {#RadioTimeEventRaise}
+###RadioTime.event.raise### {#CustomEventRaise}
 
 Raise a custom event.
 
@@ -483,7 +483,7 @@ RadioTime.event.raise(eventName, params, *toObj*)
 
 Raise an event, perhaps to only one object out of many possible recipients.  If toObj is given, the handlers will be called with toObj as "this".
 
-###RadioTime.event.unsubscribe### {#RadioTimeEventUnsubscribe}
+###RadioTime.event.unsubscribe### {#CustomEventUnsubscribe}
 
 Unsubscribe from an event.
 
@@ -666,7 +666,7 @@ This is an adapter shim for the supplied flash player.  For internal use only.
 ##scheduleProgress## {#CustomEventScheduleProgress}
   Fired once per second while RadioTime.schedule is in use.
   
-  The parameter for this event is the current show's start and end times passed as an object: {start: Date, end, Date}
+  The parameter for this event is the current show's { guide_id: String, item: {text: String, start: Date, end: Date} }
 
 ##playlistEnded## {#CustomEventPlaylistEnded}
   Fired when a player reaches the end of its playlist.  For streams, this should not occur unless there is a stream failure, but it may occur when the end of an on-demand topic is reached.
