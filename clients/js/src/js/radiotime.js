@@ -136,6 +136,7 @@ var RadioTime = {
 			switch (RadioTime.player.currentState) {
 				case "playing":
 				case "buffering": 
+				case "starting":
 				case "connecting":
 					RadioTime.player.isBusy = true;
 					break;
@@ -206,7 +207,11 @@ var RadioTime = {
 			if (!this._url) {
 				return;
 			}
-			RadioTime.activePlayer._play(this._url);
+			try {
+				RadioTime.activePlayer._play(this._url);
+			} catch (e) {
+				RadioTime.debug(e.message);
+			}
 		},
 		pickPlayer: function(data) {
 			var res = null;
@@ -223,10 +228,18 @@ var RadioTime = {
 			return res;
 		},
 		stop: function() {
-			RadioTime.activePlayer.stop();
+			try {
+				RadioTime.activePlayer.stop();
+			} catch (e) {
+				RadioTime.debug(e.message);
+			}
 		},
 		pause: function() {
-			RadioTime.activePlayer.pause();
+			try {
+				RadioTime.activePlayer.pause();
+			} catch (e) {
+				RadioTime.debug(e.message);
+			}
 		},
 		isSupported: function() {
 			return RadioTime._activePlayers.length > 0;
@@ -934,15 +947,15 @@ var RadioTime = {
 					onsuccess.call(this, data.body, data.head);
 				}
 			} else {
+				RadioTime.event.raise("failed", "Bad response: " + _url);
 				if (onfailure) onfailure.call(this, data.head);
-				RadioTime.event.raise("failed", _url);
 			}
 			RadioTime.event.raise("loaded");
 		}, function() {
+			RadioTime.event.raise("failed", "Timeout: " + _url);
 			if (onfailure) {
 				onfailure.call(this);
 			}
-			RadioTime.event.raise("failed", _url);
 		});
 	},
 	_getIdType: function(guideId) {
@@ -1367,15 +1380,21 @@ var RadioTime = {
 					init: function(data) {
 						this._requestCompleted = true;
 						if (this._callback) {
-							this._callback.call(this, data);
+							this._callback.call(null, data);
 						}
-						_this.clearRequest(this._reqId);
+						var rqid = this._reqId;
+						setTimeout(function() {
+							_this.clearRequest(rqid);
+						}, 100);
 					},
 					fail: function() {
 						if (this._failure) {
-							this._failure.call(this);
+							this._failure.call(null);
 						}
-						_this.clearRequest(this._reqId);
+						var rqid = this._reqId;
+						setTimeout(function() {
+							_this.clearRequest(rqid);
+						}, 100);
 					}
 				};
 			} else {
@@ -1399,7 +1418,6 @@ var RadioTime = {
 				s.onerror = function() {
 					_this.requests[reqId].fail();
 				}
-				s.async = "async";
 				
 			} else { // use iframe if we don't care about result
 				s = document.createElement("iframe");
@@ -1424,7 +1442,11 @@ var RadioTime = {
 				RadioTime.$(reqId).parentNode.removeChild(RadioTime.$(reqId));
 			} 
 			if (this.requests[reqId]) {
-				this.requests[reqId]._timeout && clearTimeout(this.requests[reqId]._timeout);
+				
+				if (typeof this.requests[reqId]._timeout != "undefined") {
+					clearTimeout(this.requests[reqId]._timeout);
+					delete this.requests[reqId]._timeout;
+				}
 				
 				delete this.requests[reqId];
 			}
