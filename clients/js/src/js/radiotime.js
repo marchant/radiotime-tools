@@ -259,7 +259,7 @@ var RadioTime = {
 			implementation: { 
 				init: function(container) {
 					this.playerName = "ce";
-					this.formats = ["mp3"];
+					this.formats = ["mp3raw"];
 					var d = document.createElement("div");
 					this._id = RadioTime.makeId();
 					d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
@@ -269,7 +269,7 @@ var RadioTime = {
 				_play: function(url){
 					if (!this._player || !this._player.play) 
 						return;
-					this._player.data = this._url;
+					this._player.data = url;
 					this._player.play(1);
 					var _this = this;
 					this._player.onPlayStateChange = function() {
@@ -374,7 +374,7 @@ var RadioTime = {
 	 		{
 				init: function(container) {
 					this.playerName = 'flash';
-					this.formats = ["mp3", "flash"];
+					this.formats = ["mp3raw", "flash"];
 					var d = document.createElement("div");
 					container.appendChild(d);
 					d.style.position = "absolute";
@@ -476,7 +476,7 @@ var RadioTime = {
 	 		{
 				init: function(container) {
 					this.playerName = 'wmp';
-					this.formats = ["wma", "wmpro", "wmvoice", "mp3"];
+					this.formats = ["wma", "wmpro", "wmvoice", "mp3", "mp3raw"];
 					var object = null;
 					try	{
 						if (window.ActiveXObject){
@@ -580,7 +580,7 @@ var RadioTime = {
 			implementation: {
 				init: function(container){
 					this.playerName = "html5";
-					this.formats = ["mp3", "aac"];
+					this.formats = ["mp3", "mp3raw", "aac"];
 					var d = new Audio();
 					this._id = RadioTime.makeId();
 					d.id = this._id;
@@ -719,7 +719,7 @@ var RadioTime = {
 	 		{
 				init: function(container) {
 					this.playerName = 'silverlight';
-					this.formats = ["wma", "wmpro", "wmvoice"];
+					this.formats = ["wma", "wmpro", "wmvoice", "mp3raw"];
 					var x = document.createElement("script");
 					x.type = "text/xaml";
 					x.id = 'x' + RadioTime.makeId();
