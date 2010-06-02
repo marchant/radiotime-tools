@@ -45,10 +45,7 @@ var RadioTime = {
 		if (!opts.noPlayer) {
 			for (var i = 0; i< RadioTime._players.length; i++) { 
 				if (RadioTime._players[i].isSupported()) {
-					var p = {};
-					//RadioTime.merge(p, RadioTime.player);
-					//RadioTime.merge(p, RadioTime._players[i].implementation);
-					p = RadioTime._players[i].implementation;
+					var p = RadioTime._players[i].implementation;
 					p.init(this._container); 
 					this._activePlayers.push(p);
 				}
@@ -58,13 +55,16 @@ var RadioTime = {
 			RadioTime.activePlayer = this._activePlayers[0]; // for a quick test only
 			// Collect supported formats from all active players 
 			this.formats = [];
-			var f;
+			var f, fj;
 			
 			for (var i = 0; i < this._activePlayers.length; i++) {
 				f = this._activePlayers[i].formats;
 				for (var j = 0; j < f.length; j++) {
-					if (!RadioTime._inArray(this.formats, f[j])) {
-						this.formats.push(f[j]);
+					fj = f[j];
+					// mp3raw is not a valid format so should be replaced with mp3
+					fj = (fj == "mp3raw") ? "mp3" : fj;
+					if (!RadioTime._inArray(this.formats, fj)) {
+						this.formats.push(fj);
 					}
 				}
 			}
