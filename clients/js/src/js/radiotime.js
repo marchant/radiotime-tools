@@ -31,6 +31,7 @@ var RadioTime = {
 		this._useAMPM = opts.useAMPM !== undefined ? opts.useAMPM: true;
 		this._enableEvents = opts.enableEvents !== undefined ? opts.enableEvents: true;
 		this.latlon = opts.latlon;
+		this.includePlaylists = opts.includePlaylists;
 		this._exactLocation = opts.exactLocation;
 		
 		if (opts.player) { 
@@ -921,6 +922,9 @@ var RadioTime = {
 		}
 		if (!needAuth && RadioTime.formats && url.indexOf("formats") < 0 && data.indexOf("formats") < 0) {
 			url += "formats=" + RadioTime.formats.join(",") + "&";
+		}
+		if (!needAuth && !RadioTime.includePlaylists && url.indexOf("playlists") < 0 && data.indexOf("playlists") < 0) {
+			url += "playlists=none&";
 		}
 		if (RadioTime.latlon && url.indexOf("latlon") < 0 && data.indexOf("latlon") < 0) {
 			url += "latlon=" + RadioTime.latlon + "&";
