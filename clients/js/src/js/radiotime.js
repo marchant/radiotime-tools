@@ -81,11 +81,8 @@ var RadioTime = {
 		this.history = this._histories[opts['history'] || 'internal'];
 		this.history._init(opts['onHistoryChange']);
 		
-		// We don't need accurate time immediately so postpone it a bit 
-		// to give room for UI to load
-		setTimeout(function(){
-			RadioTime._syncTime();
-		}, 3*1000);
+		this.timeCorrection = 0;
+		this.gmtOffset = -(new Date()).getTimezoneOffset();
 	},
 	_addScript: function(url, onload) {
 		var head = document.getElementsByTagName('head')[0];
@@ -148,25 +145,18 @@ var RadioTime = {
 		});		
 	},
 	_syncTime: function(){
-		var now = new Date();
-		this.timeCorrection = 0;
-		this.gmtOffset = -now.getTimezoneOffset();
-		
 		var _this = this;
-		
 		RadioTime.API.getTime(function(data){
-			RadioTime.debug("Got accurate time");
-			data = data[0];
-			RadioTime.debug(data);
-			_this.gmtOffset = parseInt(data.detected_offset);
-			_this.tzName = data.detected_tz;
-			_this.timeCorrection = parseInt(data.utc_time)*1000 - (+new Date());
-			RadioTime.debug("adjusted gmtOffset = " + _this.gmtOffset + " minutes");
-			RadioTime.debug("timeCorrection = " + _this.timeCorrection + " milliseconds");
-			RadioTime.debug("Time sync took " + ((+new Date()) - (+now)) + " ms");
-			
+			_this._onTime(data);
 		});	
-		
+	},
+	_onTime: function(data) {
+		RadioTime.debug("Got accurate time");
+		data = data[0];
+		RadioTime.debug(data);
+		this.gmtOffset = parseInt(data.detected_offset);
+		this.tzName = data.detected_tz;
+		this.timeCorrection = parseInt(data.utc_time)*1000 - (+new Date());
 	},
 	player: {
 		startPlaylist: function(playlist) {
@@ -1192,6 +1182,10 @@ var RadioTime = {
 			RadioTime.event.raise("loading", 'status_loading_menu');
 			RadioTime.loadJSON("Browse.ashx", success, failure);
 		},
+		getHomeScreen: function(success, failure) {
+			RadioTime.event.raise("loading", 'status_loading');
+			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure);
+		},
 		getStationSchedule: function(success, failure, id){ //TODO (SDK) - add optional time range.
 			var startDate = RadioTime.now();
 			var stopDate = RadioTime.now();
@@ -1277,6 +1271,20 @@ var RadioTime = {
 						success.call(this, out);
 					}, failure);
 			});
+		},
+		getConfig: function(success, failure) {
+			RadioTime.event.raise("loading", 'status_loading_configuration');
+			var url = RadioTime._formatReq("Config.ashx?c=time,contentquery");
+			RadioTime.loadJSON(url, function(data){
+				for (var i = 0; i < data.length; i++) {
+					if (data[i].key == "strings") {
+						RadioTime._applyLocalStrings(data[i].children);
+					} else if (data[i].key == "time") {
+						RadioTime._onTime(data[i].children);
+					}
+				}
+				success(data);
+			}, failure);
 		}, 
 		getLocalStrings: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading');
