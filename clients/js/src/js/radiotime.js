@@ -116,8 +116,8 @@ var RadioTime = {
 		VK_RIGHT: 39,
 		VK_BACK: 27,
 		VK_BACK_SPACE: 8,
-		VK_PLAY: 190, //	"."
-		VK_STOP: 188, //	","
+		VK_PLAY: 120, //	"F9"
+		VK_STOP: 121, //	"F10"
 		VK_PAUSE: 191  //	"/"															
 	},
 	_initKeys: function() {
@@ -210,6 +210,10 @@ var RadioTime = {
 				res = RadioTime._activePlayers[0]; // default choice
 			}
 			for (var i = 0; i < RadioTime._activePlayers.length; i++) {
+				// Convert is_direct into pseudotype "mp3raw"
+				if (data.media_type == "mp3" && data.is_direct) {
+					data.media_type = "mp3raw";
+				}
 				if (data.media_type && 
 				RadioTime._inArray(RadioTime._activePlayers[i].formats, data.media_type)) {
 					res = RadioTime._activePlayers[i];
@@ -1089,6 +1093,7 @@ var RadioTime = {
 						break;
 					}
 				}
+				this.onHistoryChange(this.last());
 			}
 		},
 		'hash': { //FIXME: assuming (as RSH does) that the hash is ours to use is bad for multi-widget pages.
@@ -1297,6 +1302,11 @@ var RadioTime = {
 		getTime: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_sync_time');
 			var url = RadioTime._formatReq("Config.ashx?c=time");
+			RadioTime.loadJSON(url, success, failure)
+		},
+		submitFeedback: function(success, failure, text, email, id) {
+			RadioTime.event.raise("loading", 'sending_message');
+			var url = RadioTime._formatReq("Report.ashx?c=feedback&id=" + id + "&email=" + email + "&text=" + encodeURIComponent(text));
 			RadioTime.loadJSON(url, success, failure)
 		}
 	},
