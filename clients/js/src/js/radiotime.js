@@ -33,6 +33,7 @@ var RadioTime = {
 		this.latlon = opts.latlon;
 		this.includePlaylists = opts.includePlaylists;
 		this._exactLocation = opts.exactLocation;
+		this._username = opts.username;
 		
 		if (opts.player) { 
 			this.addPlayer(opts.player);
@@ -908,6 +909,10 @@ var RadioTime = {
 			url = (needAuth ? "https://" : "http://") + RadioTime._baseUrl + url;
 		}
 		url += (url.indexOf("?")!=-1 ? "&" : "?");
+
+		if (url.indexOf("username") < 0 && this._username !== undefined) {
+			url += "username=" + this._username + "&";
+		}
 		if (url.indexOf("partnerId") < 0 && data.indexOf("partnerId") < 0) {
 			url += "partnerId=" + RadioTime._partnerId + "&";
 		}
