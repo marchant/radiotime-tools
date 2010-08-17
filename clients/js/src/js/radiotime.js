@@ -34,6 +34,7 @@ var RadioTime = {
 		this.includePlaylists = opts.includePlaylists;
 		this._exactLocation = opts.exactLocation;
 		this._username = opts.username;
+		this._password = opts.password;
 		
 		if (opts.player) { 
 			this.addPlayer(opts.player);
@@ -912,6 +913,9 @@ var RadioTime = {
 
 		if (url.indexOf("username") < 0 && this._username !== undefined) {
 			url += "username=" + this._username + "&";
+		}
+		if(url.indexOf("password") < 0 && this._password !== undefined) {
+			url += "password=" + this._password + "&";
 		}
 		if (url.indexOf("partnerId") < 0 && data.indexOf("partnerId") < 0) {
 			url += "partnerId=" + RadioTime._partnerId + "&";
