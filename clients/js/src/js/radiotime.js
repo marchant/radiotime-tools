@@ -35,6 +35,7 @@ var RadioTime = {
 		this._exactLocation = opts.exactLocation;
 		this._username = opts.username;
 		this._password = opts.password;
+		this._useCache = opts.useCache;
 		
 		if (opts.player) { 
 			this.addPlayer(opts.player);
@@ -899,6 +900,9 @@ var RadioTime = {
 		var logoFormat = RadioTime.logoFormats[logoFormat] || "png";
 		return "http://radiotime-logos.s3.amazonaws.com/" + guide_id + logoSizeCode + "." + logoFormat;
 	},
+	getReportProblemUrl: function(guide_id) {
+		return "Report.ashx?c=wizard&id=" + guide_id;
+	},
 	_formatReq: function(url, needAuth, data) {
 		// Prepare the URL
 		data = data || "";
@@ -943,14 +947,27 @@ var RadioTime = {
 		}
 		return {"url": url, "data": data};
 	},	
-	loadJSON: function(url, onsuccess, onfailure) {
+	loadJSON: function(url, onsuccess, onfailure, cacheTTL) {
+		var originalUrl = url;
 		url = RadioTime._formatReq(url);
 		var _url = url.url;
-		RadioTime.debug("API request: " + _url);
+		RadioTime.debug("API request: " + originalUrl);
+		if (RadioTime._useCache && cacheTTL) {
+			var cached = RadioTime.cache.get(originalUrl);
+			if (cached && onsuccess) {
+				RadioTime.debug("Returning result from cache");
+				onsuccess.call(this, cached.body, cached.head);
+				RadioTime.event.raise("loaded");
+				return;
+			}
+		}
 		RadioTime._loader.sendRequest(url, function(data) {
 			var status = (data.head && data.head.status) ? data.head.status : "missing";
 			if (status == "200") { // Status is not returned for Register.aspx call
 				if (data && onsuccess) {
+					if (RadioTime._useCache && cacheTTL){
+						RadioTime.cache.add(originalUrl, data, cacheTTL);
+					}
 					onsuccess.call(this, data.body, data.head);
 				}
 			} else {
@@ -1190,15 +1207,15 @@ var RadioTime = {
 	API: {
 		getCategory: function(success, failure, category) {
 			RadioTime.event.raise("loading", 'status_loading');
-			RadioTime.loadJSON("Browse.ashx?c=" + category, success, failure);
+			RadioTime.loadJSON("Browse.ashx?c=" + category, success, failure, 60*1000);
 		},
 		getRootMenu: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading_menu');
-			RadioTime.loadJSON("Browse.ashx", success, failure);
+			RadioTime.loadJSON("Browse.ashx", success, failure, 60*1000);
 		},
 		getHomeScreen: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading');
-			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure);
+			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure, 60*1000);
 		},
 		getStationSchedule: function(success, failure, id){ //TODO (SDK) - add optional time range.
 			var startDate = RadioTime.now();
@@ -1224,7 +1241,7 @@ var RadioTime = {
 					data[i].oType = RadioTime._getIdType(data[i].guide_id);
 				}
 				success.call(this, data);
-			}, failure);
+			}, failure, 10*60*1000);
 		},
 		getProgramListeningOptions: function(success, failure, id) {
 			RadioTime.event.raise("loading", 'status_loading');
@@ -1249,22 +1266,21 @@ var RadioTime = {
 				if (failure) failure.call(null);
 				RadioTime.event.raise("failed", "");
 			}
-			RadioTime.loadJSON("Browse.ashx?id=" + id, success, failure);
+			RadioTime.loadJSON("Browse.ashx?id=" + id, success, failure, 60*60*1000);
 		},
 		addPreset: function(success, failure, id) {
 			RadioTime.event.raise("loading", 'status_adding_preset');
 			var url = RadioTime._formatReq("Preset.ashx?c=add&id=" + id, true);
-			RadioTime.loadJSON(url, success, failure)
+			RadioTime.loadJSON(url, success, failure);
 		},
 		removePreset: function(success, failure, id) {
 			RadioTime.event.raise("loading", 'status_removing_preset');
 			var url = RadioTime._formatReq("Preset.ashx?c=remove&id=" + id, true);
-			RadioTime.loadJSON(url, success, failure)
+			RadioTime.loadJSON(url, success, failure);
 		},
 		search: function(success, failure, query, filter) {
 			RadioTime.event.raise("loading", 'status_searching');
-			var url = RadioTime._formatReq("Search.ashx?query=" + query + "&filter=" + filter);
-			RadioTime.loadJSON(url, success, failure)
+			RadioTime.loadJSON("Search.ashx?query=" + query + "&filter=" + filter, success, failure, 60*1000);
 		},
 		getAccountStatus: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_checking_account');
@@ -1288,8 +1304,7 @@ var RadioTime = {
 		},
 		getConfig: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading_configuration');
-			var url = RadioTime._formatReq("Config.ashx?c=time,contentquery");
-			RadioTime.loadJSON(url, function(data){
+			RadioTime.loadJSON("Config.ashx?c=time,contentquery", function(data){
 				for (var i = 0; i < data.length; i++) {
 					if (data[i].key == "strings") {
 						RadioTime._applyLocalStrings(data[i].children);
@@ -1298,25 +1313,68 @@ var RadioTime = {
 					}
 				}
 				success(data);
-			}, failure);
+			}, failure, 60*60*1000);
 		}, 
 		getLocalStrings: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading');
-			var url = RadioTime._formatReq("Config.ashx?c=contentQuery");
-			RadioTime.loadJSON(url, function(data) {
+			RadioTime.loadJSON("Config.ashx?c=contentQuery", function(data) {
 				RadioTime._applyLocalStrings(data);
 				success(data);
-			}, failure);
+			}, failure, 60*60*1000);
 		},
 		getTime: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_sync_time');
-			var url = RadioTime._formatReq("Config.ashx?c=time");
-			RadioTime.loadJSON(url, success, failure)
+			RadioTime.loadJSON("Config.ashx?c=time", success, failure)
 		},
 		submitFeedback: function(success, failure, text, email, id) {
 			RadioTime.event.raise("loading", 'sending_message');
-			var url = RadioTime._formatReq("Report.ashx?c=feedback&id=" + id + "&email=" + email + "&text=" + encodeURIComponent(text));
-			RadioTime.loadJSON(url, success, failure)
+			RadioTime.loadJSON("Report.ashx?c=feedback&id=" + id + "&email=" + email + "&text=" + encodeURIComponent(text), success, failure)
+		}
+	},
+	cache: {
+		defaultTTL: 30*1000,
+		_cache: {},
+		add: function(key, value, ttl /*milliseconds*/){
+			if (!ttl) {
+				ttl = this.defaultTTL;
+			}
+			this._cache[key] = {
+				"data": this._copyJSON(value), 
+				"expires": ttl + (+new Date())
+			};	
+		},
+		get: function(key){
+			if (typeof this._cache[key] == "undefined") {
+				return false;
+			}
+			if (this._cache[key].expires < (+new Date())){
+				return false;
+			}
+			return this._copyJSON(this._cache[key].data);
+		},
+		/**
+		 * Simple deep copy method, good enough for our data
+		 * If you feed object with cyclic reference to it, it will casue stack overflow
+		 * @param {Object} json
+		 */
+		_copyJSON: function(json){
+			if (typeof json === "object"){
+				if (typeof json["length"] !== "undefined"){
+					var out = [];
+					for (var i = 0; i < json.length; i++) {
+						out.push(this._copyJSON(json[i]));
+					}
+					return out;
+				} else {
+					var out = {};
+					for (var i in json) {
+						out[i] = this._copyJSON(json[i]);
+					}
+					return out;
+				}
+			} else {
+				return json;
+			}
 		}
 	},
 	response: {
