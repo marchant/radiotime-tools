@@ -65,6 +65,9 @@ RadioTime.init(partnerId, containerId, path, *opts*)
 |opts.player|Your player implementation (see [RadioTime.player](#RadioTimePlayer) below)|undefined|
 |opts.noPlayer|Set to true if audio playback is not needed.  The broadest [stream selection](http://inside.radiotime.com/developers/guide/solutions/streaming) can then be shown.|false|
 |opts.verbose|Turns on debugging output via [RadioTime.debug](#RadioTimeDebug)|false|
+|opts.username|RadioTime account username to use.|undefined|
+|opts.password|RadioTime account password to use.|undefined|
+|opts.useCache|Set to true to turn off services responses caching.|false|
 
 
 partnerId is a string that uniquely identifies your application.
@@ -83,13 +86,14 @@ If set to a string with latitude and longitude in a string-delimited format, e.g
 
 RadioTime.loadJSON is a used by all the RadioTime.API functions to make requests to the RadioTime [JSON API](http://inside.radiotime.com/developers/api/opml/methods).  If you need to use loadJSON directly, please consider filing a feature request for a more specific wrapper function.
 
-RadioTime.loadJSON(url, success, failure)
+RadioTime.loadJSON(url, success, failure, cacheTTL)
 
 |Name|Value|
 |--|--|
 |url|The API URL to request|
 |success|See [RadioTime.API](#RadioTimeAPI)|
 |failure|See [RadioTime.API](#RadioTimeAPI)|
+|cacheTTL|Cache time to live, only has effect if opts.useCache was set to true|
 
 ##RadioTime.API## {#RadioTimeAPI}
 
