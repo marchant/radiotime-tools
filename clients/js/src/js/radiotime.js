@@ -804,10 +804,16 @@ var RadioTime = {
 		schedule: null,
 		nowPlayingIndex: -1,
 		guide_id: null,
-		init: function(guide_id) {
+		init: function(guide_id, schedule) {
 			var _this = this;
 			this.stopUpdates();
-			this._fetch(guide_id);
+			if (!schedule) {
+				this._fetch(guide_id);
+			} else {
+				this.lastUpdate = RadioTime.now();
+				this.guide_id = guide_id;
+				this._available(schedule);
+			}
 		},
 		_fetch: function(guide_id) {
 			RadioTime.debug("fetch with " + guide_id);
@@ -1068,6 +1074,31 @@ var RadioTime = {
 		endTime.setTime(startTime + duration*1000);
 		return endTime;
 	},	
+	processSchedule: function(data){
+		var now = RadioTime.now().getTime();
+		// Pre-process the data
+		for (var i = 0; i < data.length; i++) {
+			data[i].start = RadioTime._dateFromServicesString(data[i].start).getTime();
+			data[i].end = RadioTime._calculateEndTime(data[i].start, data[i].duration).getTime();
+			data[i].is_playing = (data[i].start < now) && (data[i].end > now);
+			var str = RadioTime.formatTime(data[i].start);					
+			data[i].timeSpanString = str;
+			data[i].index = i;
+			data[i].oType = RadioTime._getIdType(data[i].guide_id);
+		}
+		return data;
+	},
+	_getScheduleRequestParams: function(){
+		var startDate = RadioTime.now();
+		var stopDate = RadioTime.now();
+		stopDate.setTime(startDate.getTime() + 1000 * 60 * 60 * 24);
+		startDate.setTime(startDate.getTime() - 1000 * 60 * 60 * 24);
+			
+		//FIXME: seems we should either autodetect (as here) or use offset (as RT getTime above), but not both.
+		var res = "&start=" + RadioTime._dateToYYYYMMDD(startDate) +
+			"&stop=" + RadioTime._dateToYYYYMMDD(stopDate) + "&autodetect=true"; // + "&offset=" + RadioTime.gmtOffset;
+		return res;
+	}, 
 	_histories: { //TODO (SDK) switch to hash-tag history system to allow browser back/forward to work.
 		"internal": {
 			_history: [],
@@ -1217,30 +1248,20 @@ var RadioTime = {
 			RadioTime.event.raise("loading", 'status_loading');
 			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure, 60*1000);
 		},
+		describeComposite: function(success, failure, guide_id, detail) {
+			detail = detail || "options,schedule,listing,affiliate,genre,recommendation";
+			var url = "Describe.ashx?id=" + guide_id +"&c=composite&detail=" + detail;
+			if (/schedule/.test(detail)){
+				url += RadioTime._getScheduleRequestParams();
+			}
+			RadioTime.event.raise("loading", 'status_loading');
+			RadioTime.loadJSON(url, success, failure, 60*1000);
+		},
 		getStationSchedule: function(success, failure, id){ //TODO (SDK) - add optional time range.
-			var startDate = RadioTime.now();
-			var stopDate = RadioTime.now();
-			stopDate.setTime(startDate.getTime() + 1000 * 60 * 60 * 24);
-			startDate.setTime(startDate.getTime() - 1000 * 60 * 60 * 24);
-			
-			//FIXME: seems we should either autodetect (as here) or use offset (as RT getTime above), but not both.
-			var url = "Browse.ashx?c=schedule&id=" + id + "&start=" + RadioTime._dateToYYYYMMDD(startDate) +
-			"&stop=" + RadioTime._dateToYYYYMMDD(stopDate) + "&autodetect=true";// + "&offset=" + RadioTime.gmtOffset;
-			
+			var url = "Browse.ashx?c=schedule&id=" + id + RadioTime._getScheduleRequestParams();			
 			RadioTime.event.raise("loading", 'status_loading_schedule');
 			RadioTime.loadJSON(url, function(data) {
-				var now = RadioTime.now().getTime();
-				// Pre-process the data
-				for (var i = 0; i < data.length; i++) {
-					data[i].start = RadioTime._dateFromServicesString(data[i].start).getTime();
-					data[i].end = RadioTime._calculateEndTime(data[i].start, data[i].duration).getTime();
-					data[i].is_playing = (data[i].start < now) && (data[i].end > now);
-					var str = RadioTime.formatTime(data[i].start);					
-					data[i].timeSpanString = str;
-					data[i].index = i;
-					data[i].oType = RadioTime._getIdType(data[i].guide_id);
-				}
-				success.call(this, data);
+				success.call(this, RadioTime.processSchedule(data));
 			}, failure, 10*60*1000);
 		},
 		getProgramListeningOptions: function(success, failure, id) {
@@ -1359,6 +1380,9 @@ var RadioTime = {
 		 */
 		_copyJSON: function(json){
 			if (typeof json === "object"){
+				if (json === null) {
+					return null;
+				}
 				if (typeof json["length"] !== "undefined"){
 					var out = [];
 					for (var i = 0; i < json.length; i++) {
