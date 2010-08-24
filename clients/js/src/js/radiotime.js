@@ -1249,7 +1249,7 @@ var RadioTime = {
 			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure, 60*1000);
 		},
 		describeComposite: function(success, failure, guide_id, detail) {
-			detail = detail || "options,schedule,listing,affiliate,genre,recommendation";
+			detail = detail || "options,schedules,listing,affiliates,genres,recommendations";
 			var url = "Describe.ashx?id=" + guide_id +"&c=composite&detail=" + detail;
 			if (/schedule/.test(detail)){
 				url += RadioTime._getScheduleRequestParams();
