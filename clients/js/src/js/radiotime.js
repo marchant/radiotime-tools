@@ -337,7 +337,8 @@ var RadioTime = {
 			}				
 		}, {
 			/*
-			 * Flash player
+			 * Flash player ActionScript 3.0 version
+			 * Used for flash (rtmp) streams
 			 */
 			isSupported: function() { 
 				var f = "-", n = navigator;
@@ -372,7 +373,7 @@ var RadioTime = {
 	 		{
 				init: function(container) {
 					this.playerName = 'flash';
-					this.formats = ["mp3raw", "flash"];
+					this.formats = ["flash"];
 					var d = document.createElement("div");
 					container.appendChild(d);
 					d.style.position = "absolute";
@@ -436,6 +437,107 @@ var RadioTime = {
 				}	
 			}
 		},{
+			/*
+			 * Flash player ActionScript 2.0 version
+			 * Used for mp3 streams
+			 */
+			isSupported: function() { 
+				var f = "-", n = navigator;
+				if (n.plugins && n.plugins.length) {
+					for (var ii=0; ii<n.plugins.length; ii++) {
+						if (n.plugins[ii].name.indexOf('Shockwave Flash') != -1) {
+							f = n.plugins[ii].description.split('Shockwave Flash ')[1];
+							break;
+						}
+					}
+				} else if (window.ActiveXObject) {
+					for (var ii=10; ii>=2; ii--) {
+						try {
+							var fl = eval("new ActiveXObject('ShockwaveFlash.ShockwaveFlash." + ii + "');");
+							if (fl) { 
+								f = ii + '.0'; 
+								break; 
+							}
+						}
+						catch(e) {}
+					}
+				}
+				if (f != "-") {
+					RadioTime.debug("Flash " + f + " detected");
+				}
+				if (f.split(".")[0]) {
+					f = f.split(".")[0];
+				}
+				return (f > 6);
+			},
+	 		implementation:
+	 		{
+				init: function(container) {
+					this.playerName = 'flashAS2';
+					this.formats = ["mp3raw"];
+					var d = document.createElement("div");
+					container.appendChild(d);
+					d.style.position = "absolute";
+					this._id = RadioTime.makeId();
+					var flashvars = '"autostart=true&objectid=' + this._id + '"';
+					if (/MSIE/.test(navigator.userAgent)) { // IE detection ~[-1]
+						d.innerHTML = '<object id="' + this._id + '" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="1" height="1"><param name="allowScriptAccess" value="always" /><param name="movie" value="' + RadioTime._path + 'swf/mplayer-AS2.swf?' + this._id + '" /><param name="flashvars" value=' + flashvars + '/></object>';
+					} else {
+						d.innerHTML = '<embed id="' + this._id + '" type="application/x-shockwave-flash" width="1" height="1" src="' + RadioTime._path + 'swf/mplayer-AS2.swf?' + this._id + '" allowscriptaccess="always"  flashvars=' + flashvars + '/>';
+					}
+					container.innerHTML;
+					this._player = d.firstChild;
+
+					var _this = this;
+					RadioTime.event.subscribe("flashEvent", function(params) {
+						if (_this._id != params.objectid)
+							return;
+						switch (params.command) {
+							case "status":
+								if (5 == parseInt(params.arg)) {
+									RadioTime.debug("player next");
+									RadioTime.player.next();
+								}
+								RadioTime.debug("flashEvent status", params.arg);
+								RadioTime.event.raise("playstateChanged", _this.states[params.arg]);
+								break;
+							case "progress":
+							case "position":
+							case "nowplaying":
+								break;	
+							case "ready":
+								RadioTime.debug("flash object is ready");
+								break;
+						}
+						if (params.command != "position" && params.command != "progress")
+							RadioTime.debug(params);
+					});
+				},
+				_play: function(url) {
+					if (!this._player || !this._player.playDirectUrl) 
+						return;
+					this._player.playDirectUrl(url);
+				},
+				stop: function() {
+					if (!this._player || !this._player.doStop) 
+						return;
+					this._player.doStop();
+				},
+				pause: function() {
+					if (!this._player || !this._player.doPause) 
+						return;
+					this._player.doPause();
+				},
+				states: {
+					5:  "finished", 
+					0:  "unknown", 
+					1:  "stopped", 
+					2:  "connecting", 
+					3:  "playing",
+					4:  "error"
+				}	
+			}
+		},{			
 			/*
 			 * WMP player
 			 */
