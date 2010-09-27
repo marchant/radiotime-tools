@@ -239,6 +239,24 @@ var RadioTime = {
 				RadioTime.debug(e.message);
 			}
 		},
+		/**
+		 * setVolume -- Sets playback volume if supported by the current player
+		 * @param {Number} volume -- Volume level in %. Valid values are 0 to 100
+		 */
+		setVolume: function(volume){
+			if (typeof RadioTime.activePlayer["setVolume"] != "undefined") {
+				RadioTime.activePlayer.setVolume(volume);
+			} else {
+				RadioTime.debug("setVolume is not supported by the current player");
+			}
+		},
+		getVolume: function() {
+			if (typeof RadioTime.activePlayer["getVolume"] != "undefined") {
+				return RadioTime.activePlayer.getVolume();
+			} else {
+				return -1;
+			}
+		},
 		isSupported: function() {
 			return RadioTime._activePlayers.length > 0;
 		}
@@ -427,6 +445,13 @@ var RadioTime = {
 						return;
 					this._player.doPause();
 				},
+				setVolume: function(volume) {
+					this._volume = volume;
+					this._player.setVolume(volume);
+				},
+				getVolume: function() {
+					return this._volume;
+				},
 				states: {
 					5:  "finished", 
 					0:  "unknown", 
@@ -527,6 +552,13 @@ var RadioTime = {
 					if (!this._player || !this._player.doPause) 
 						return;
 					this._player.doPause();
+				},
+				setVolume: function(volume) {
+					this._volume = volume;
+					this._player.setVolume(volume);
+				},
+				getVolume: function() {
+					return this._volume;
 				},
 				states: {
 					5:  "finished", 
@@ -637,6 +669,16 @@ var RadioTime = {
 					if (!this._player) 
 						return;
 					this._player.controls.pause();
+				},
+				setVolume: function(volume) {
+					if (!this._player) 
+						return;
+					this._player.settings.volume = volume;
+				},
+				getVolume: function() {
+					if (!this._player) 
+						return;
+					return this._player.settings.volume;
 				},
 /*	
  * WMP playState codes reference
@@ -762,6 +804,12 @@ var RadioTime = {
 				pause: function(){
 					this._player.pause();
 				},
+				setVolume: function(volume) {
+					this._player.volume = volume/100.0;
+				},
+				getVolume: function() {
+					return Math.round(100*this._player.volume);
+				},
 				states: {
 					"finished": "finished",
 					"stopped": "stopped",
@@ -884,6 +932,12 @@ var RadioTime = {
 					} else {
 						this.__player.Stop();
 					}
+				},
+				setVolume: function(volume) {
+					this._player.Volume = volume/100.0;
+				},
+				getVolume: function() {
+					return Math.round(100*this._player.Volume);
 				},
 				states: {
 					"Closed":  "stopped", 
