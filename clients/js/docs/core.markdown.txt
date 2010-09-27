@@ -358,6 +358,23 @@ Stops playback.
 
 RadioTime.player.stop()
 
+###RadioTime.player.setVolume###
+
+Sets volume level if supported by the player.
+
+RadioTime.player.setVolume(*volume*)
+
+|Name|Value|default|
+|--|--|--|
+|volume|Volume level in %. Valid valies are 0 to 100.|
+
+###RadioTime.player.getVolume###
+
+Returns current volume level.
+
+RadioTime.player.getVolume()
+
+
 ###Supplying your own player###
 
 If you would like to implement your own player, it is possible with the current implementation -- [just let us know](mailto:development@radiotime.com) and we'll document this further.
