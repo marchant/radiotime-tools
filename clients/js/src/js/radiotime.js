@@ -1402,7 +1402,7 @@ var RadioTime = {
 		},
 		getHomeScreen: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_loading');
-			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure, 60*1000);
+			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure, 10*60*1000);
 		},
 		describeComposite: function(success, failure, guide_id, detail) {
 			detail = detail || "options,schedules,listing,affiliates,genres,recommendations";
@@ -1449,11 +1449,13 @@ var RadioTime = {
 			RadioTime.event.raise("loading", 'status_adding_preset');
 			var url = RadioTime._formatReq("Preset.ashx?c=add&id=" + id, true);
 			RadioTime.loadJSON(url, success, failure);
+			RadioTime.cache.clear();
 		},
 		removePreset: function(success, failure, id) {
 			RadioTime.event.raise("loading", 'status_removing_preset');
 			var url = RadioTime._formatReq("Preset.ashx?c=remove&id=" + id, true);
 			RadioTime.loadJSON(url, success, failure);
+			RadioTime.cache.clear();
 		},
 		search: function(success, failure, query, filter) {
 			RadioTime.event.raise("loading", 'status_searching');
@@ -1511,6 +1513,14 @@ var RadioTime = {
 	cache: {
 		defaultTTL: 30*1000,
 		_cache: {},
+		clearValue: function(key) {
+			if (typeof this._cache[key] != "undefined") {
+				delete this._cache[key] ;
+			}
+		},
+		clear: function() {
+			this._cache = {};
+		},
 		add: function(key, value, ttl /*milliseconds*/){
 			if (!ttl) {
 				ttl = this.defaultTTL;
