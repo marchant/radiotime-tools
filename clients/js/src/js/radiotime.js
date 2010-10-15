@@ -1080,7 +1080,7 @@ var RadioTime = {
 		if (url.indexOf("username") < 0 && this._username !== undefined) {
 			url += "username=" + this._username + "&";
 		}
-		if(url.indexOf("password") < 0 && this._password !== undefined) {
+		if (needAuth && url.indexOf("password") < 0 && this._password !== undefined) {
 			url += "password=" + this._password + "&";
 		}
 		if (url.indexOf("partnerId") < 0 && data.indexOf("partnerId") < 0) {
