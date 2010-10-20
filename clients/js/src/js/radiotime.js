@@ -1569,10 +1569,13 @@ var RadioTime = {
 	},
 	response: {
 		audio: function (body) { 
+			return this.outline(body, "audio");
+		},
+		outline: function (body, typeFilter/*optional*/) { 
 			var out = [];
 			RadioTime._walk(body, 
 				function(elem) { 
-					if (elem.element == "outline" && elem.type == "audio") {
+					if (elem.element == "outline" && (typeof typeFilter == "undefined" || elem.type == typeFilter)) {
 						out.push(elem);
 					}
 				}
