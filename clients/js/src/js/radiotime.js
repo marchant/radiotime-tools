@@ -1571,11 +1571,25 @@ var RadioTime = {
 		audio: function (body) { 
 			return this.outline(body, "audio");
 		},
+		/**
+		 * 
+		 * @param {Object} body -- services response to process
+		 * @param {Object} typeFilter -- could be string (i.e. "audio") or array (i.e. ["audio", "link"])
+		 */
 		outline: function (body, typeFilter/*optional*/) { 
 			var out = [];
+			var filter = function(type){
+				if (typeof typeFilter === "string"){
+					return type === typeFilter;
+				}
+				if (typeof typeFilter === "object"){
+					return RadioTime._inArray(typeFilter, type);
+				}
+				return true;
+			}
 			RadioTime._walk(body, 
 				function(elem) { 
-					if (elem.element == "outline" && (typeof typeFilter == "undefined" || elem.type == typeFilter)) {
+					if (elem.element == "outline" && filter(elem.type)) {
 						out.push(elem);
 					}
 				}
