@@ -53,7 +53,7 @@ var RadioTime = {
 					p.init(this._container); 
 					this._activePlayers.push(p);
 				}
-			};
+			}
 		}
 		if (this._activePlayers.length > 0) {
 			RadioTime.activePlayer = this._activePlayers[0]; // for a quick test only
@@ -79,7 +79,7 @@ var RadioTime = {
 			} else {
 				RadioTime.formats = ["mp3", "wma"];
 			}
-		};
+		}
 		
 		this.history = this._histories[opts['history'] || 'internal'];
 		this.history._init(opts['onHistoryChange']);
@@ -94,7 +94,7 @@ var RadioTime = {
 		script.onload = function() {
 			head.removeChild(script);
 			onload();
-		}
+		};
 		head.appendChild(script);
 	},
 	/* Platform key contants
@@ -163,15 +163,17 @@ var RadioTime = {
 	},
 	player: {
 		startPlaylist: function(playlist) {
-			if (!playlist || !playlist.length)
+			if (!playlist || !playlist.length) {
 				return;
+			}
 			this._playlist = playlist;
 			this._currentItem = 0;
 			this.play();
 		},
 		next: function() {
-			if (!this._playlist || !this._playlist.length)
+			if (!this._playlist || !this._playlist.length) {
 				return false;
+			}
 			if (this._currentItem < this._playlist.length - 1) {
 				this._currentItem++;
 				this.play();
@@ -293,7 +295,7 @@ var RadioTime = {
 							RadioTime.player.next();
 						}
 						RadioTime.event.raise("playstateChanged", _this.states[_this._player.playState]);
-					}
+					};
 				},
 				stop: function() {
 					if (!this._player || !this._player.stop) 
@@ -639,7 +641,7 @@ var RadioTime = {
 						RadioTime.debug("WMP error occured");
 						_this._error = true;
 						RadioTime.event.raise("playstateChanged", "error");
-					}
+					};
 
 					window["OnDSPlayStateChangeEvt"] = function(newstate) {
 						if (newstate == 8) { // Media Ended
@@ -651,7 +653,7 @@ var RadioTime = {
 						}
 						RadioTime.debug("WMP state: " + newstate);
 						RadioTime.event.raise("playstateChanged", _this.states[newstate]);
-					}
+					};
 
 				},
 				_play: function(url) {
@@ -897,7 +899,7 @@ var RadioTime = {
 						RadioTime.debug("Silverlight error: " + a.errorMessage);
 						_this._error = true;
 						RadioTime.event.raise("playstateChanged", "error");
-					}
+					};
 					window["__slLoad_rt"] = function(s, a) {
 						RadioTime.debug("Silverlight is ready");
 						_this.__player = _this._player.content.findName("media");
@@ -911,7 +913,7 @@ var RadioTime = {
 							} 
 							RadioTime.event.raise("playstateChanged", _this.states[cs]);
 						});
-					}
+					};
 				},
 				_play: function(url) {
 					if (!this.__player) 
@@ -983,7 +985,7 @@ var RadioTime = {
 			RadioTime.API.getStationSchedule(function(data){
 				_this.guide_id = guide_id;
 				_this._available(data);
-			}, function() { RadioTime.debug("Failed to get schedule") }, guide_id);
+			}, function() { RadioTime.debug("Failed to get schedule"); }, guide_id);
 			this.lastUpdate = RadioTime.now();
 		},
 		/*
@@ -1041,7 +1043,7 @@ var RadioTime = {
 			});
 			if (this.schedule[this.nowPlayingIndex].end < RadioTime.now().getTime()) {
 				this._available(this.schedule);
-			};
+			}
 		},
 		stopUpdates: function() {
 			if (this._tickReg) {
@@ -1098,7 +1100,7 @@ var RadioTime = {
 		if (RadioTime.latlon && url.indexOf("latlon") < 0 && data.indexOf("latlon") < 0) {
 			url += "latlon=" + RadioTime.latlon + "&";
 			if (RadioTime._exactLocation && url.indexOf("exact") < 0 && data.indexOf("exact") < 0) {
-				url += "exact=1&"
+				url += "exact=1&";
 			}
 		}
 		if (!needAuth && RadioTime.locale && url.indexOf("locale") < 0 && data.indexOf("locale") < 0) {
@@ -1208,8 +1210,8 @@ var RadioTime = {
 					break;
 				case (hours > 12):
 					suffix = "pm";
-					hours -= 12
-					break
+					hours -= 12;
+					break;
 				default:
 					break;
 			}
@@ -1319,7 +1321,7 @@ var RadioTime = {
 					if (onHistoryChange) {
 						onHistoryChange(historyData);
 					}
-				})
+				});
 			},
 			_makeHash: function(seq) {
 				return "history" + seq;
@@ -1404,15 +1406,6 @@ var RadioTime = {
 			RadioTime.event.raise("loading", 'status_loading');
 			RadioTime.loadJSON("Browse.ashx?c=index,best", success, failure, 10*60*1000);
 		},
-		describeComposite: function(success, failure, guide_id, detail) {
-			detail = detail || "options,schedules,listing,affiliates,genres,recommendations";
-			var url = "Describe.ashx?id=" + guide_id +"&c=composite&detail=" + detail;
-			if (/schedule/.test(detail)){
-				url += RadioTime._getScheduleRequestParams();
-			}
-			RadioTime.event.raise("loading", 'status_loading');
-			RadioTime.loadJSON(url, success, failure, 60*1000);
-		},
 		getStationSchedule: function(success, failure, id){ //TODO (SDK) - add optional time range.
 			var url = "Browse.ashx?c=schedule&id=" + id + RadioTime._getScheduleRequestParams();			
 			RadioTime.event.raise("loading", 'status_loading_schedule');
@@ -1428,6 +1421,15 @@ var RadioTime = {
 			RadioTime.event.raise("loading", 'status_finding_stations');
 			RadioTime.loadJSON("Describe.ashx?id=" + id, success, failure);
 		},
+		describeComposite: function(success, failure, guide_id, detail) {
+			detail = detail || "options,schedules,listing,affiliates,genres,recommendations";
+			var url = "Describe.ashx?id=" + guide_id +"&c=composite&detail=" + detail;
+			if (/schedule/.test(detail)){
+				url += RadioTime._getScheduleRequestParams();
+			}
+			RadioTime.event.raise("loading", 'status_loading');
+			RadioTime.loadJSON(url, success, failure, 60*1000);
+		},
 		tune: function(success, failure, guideId) { 
 			RadioTime.event.raise("loading", 'status_loading');
 			RadioTime.loadJSON(RadioTime.getTuneUrl(guideId), success, failure);
@@ -1435,6 +1437,10 @@ var RadioTime = {
 		getOptions: function(success, failure, id){
 			RadioTime.event.raise("loading", 'status_loading');
 			RadioTime.loadJSON("Options.ashx?id=" + id, success, failure);
+		},
+		getWizard: function( success, failure, id ) {
+			RadioTime.event.raise("loading", 'status_loading');
+			RadioTime.loadJSON("Report.ashx?c=wizard&id=" + id, success, failure);
 		},
 		getRelated: function(success, failure, id){
 			RadioTime.event.raise("loading", 'status_loading');
@@ -1461,6 +1467,16 @@ var RadioTime = {
 			RadioTime.event.raise("loading", 'status_searching');
 			RadioTime.loadJSON("Search.ashx?query=" + query + "&filter=" + filter, success, failure, 60*1000);
 		},
+		getAccountClaim: function( success, failure ) {
+			var u = RadioTime._formatReq("Account.ashx?c=claim", true);
+			RadioTime.loadJSON(u, function(data){
+				var out = {
+					"hasAccount": false,
+					"text": data[0].text
+				};
+				success.call(this, out);
+			}, failure);
+		},
 		getAccountStatus: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_checking_account');
 			var url = RadioTime._formatReq("Account.ashx?c=query", true);
@@ -1468,17 +1484,10 @@ var RadioTime = {
 					var out = {
 						"hasAccount": true,
 						"text": data[0].text
-					}
+					};
 					success.call(this, out);
 				}, function(){
-					var u = RadioTime._formatReq("Account.ashx?c=claim", true);
-					RadioTime.loadJSON(u, function(data){
-						var out = {
-							"hasAccount": false,
-							"text": data[0].text
-						}
-						success.call(this, out);
-					}, failure);
+					RadioTime.API.getAccountClaim( success, failure );
 			});
 		},
 		getConfig: function(success, failure) {
@@ -1503,11 +1512,11 @@ var RadioTime = {
 		},
 		getTime: function(success, failure) {
 			RadioTime.event.raise("loading", 'status_sync_time');
-			RadioTime.loadJSON("Config.ashx?c=time", success, failure)
+			RadioTime.loadJSON("Config.ashx?c=time", success, failure);
 		},
 		submitFeedback: function(success, failure, text, email, id) {
 			RadioTime.event.raise("loading", 'sending_message');
-			RadioTime.loadJSON("Report.ashx?c=feedback&id=" + id + "&email=" + email + "&text=" + encodeURIComponent(text), success, failure)
+			RadioTime.loadJSON("Report.ashx?c=feedback&id=" + id + "&email=" + email + "&text=" + encodeURIComponent(text), success, failure);
 		}
 	},
 	cache: {
@@ -1586,7 +1595,7 @@ var RadioTime = {
 					return RadioTime._inArray(typeFilter, type);
 				}
 				return true;
-			}
+			};
 			RadioTime._walk(body, 
 				function(elem) { 
 					if (elem.element == "outline" && filter(elem.type)) {
@@ -1618,8 +1627,8 @@ var RadioTime = {
 				function(elem, depth) {
 					if (inStationsDepth > depth) {
 						inStationsDepth = -1;
-						return
-					};
+						return;
+					}
 					if (elem.key == 'stations') {
 						inStationsDepth = depth + 1;
 						return;
@@ -1713,8 +1722,7 @@ var RadioTime = {
 				s = document.createElement("script");
 				s.onerror = function() {
 					_this.requests[reqId].fail();
-				}
-				
+				};
 			} else { // use iframe if we don't care about result
 				s = document.createElement("iframe");
 				s.style.visibility = "hidden";
@@ -1722,7 +1730,7 @@ var RadioTime = {
 				s.style.height = "1px";
 				s.onload = function() {
 					_this.clearRequest(this.id);
-				}
+				};
 			}
 			s.id = reqId;
 			s.src = this.requests[reqId]._reqUrl;
@@ -1838,7 +1846,7 @@ var RadioTime = {
 				} else {
 					return false;
 				}
-			}
+			};
 		}
 		for (var i in source){
 			if (!target[i]) {
@@ -1891,7 +1899,7 @@ var RadioTime = {
 			"command": command,
 			"arg": arg,
 			"objectid": objectid
-		}
+		};
 		RadioTime.event.raise("flashEvent", params);
 	}	
-}
+};
