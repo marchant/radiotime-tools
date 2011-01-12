@@ -631,7 +631,8 @@ var RadioTime = {
 						d.innerHTML = '<embed width="1" height="1" id="' + this._id + '" type="application/x-ms-wmp"></embed>';
 					} else {
 						delete object;
-						d.innerHTML = '<object classid="CLSID:6BF52A52-394A-11d3-B153-00C04F79FAA6" width="1" height="1" id="' + this._id + '"></object>';
+						d.innerHTML = '<object classid="CLSID:6BF52A52-394A-11d3-B153-00C04F79FAA6" width="1" height="1" id="' + this._id + '"><param name = "uiMode" value = "none"/></object>';
+
 					}
 					container.innerHTML;
 					this._player = d.firstChild;
