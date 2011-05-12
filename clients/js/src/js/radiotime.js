@@ -773,12 +773,12 @@ var RadioTime = {
 						case "pause":
 							state = "paused";
 							break;
-						case "stalled":
-						case "suspend":
 						case "ended":
 						case "stopped":
 							state = "stopped";
 							break;
+						case "stalled":
+						case "suspend":
 						case "playing":
 							state = "playing";
 							break;
