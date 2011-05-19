@@ -890,7 +890,7 @@ var RadioTime = {
 					if (navigator.userAgent.match(/applewebkit/i)) {
 						d.innerHTML = '<embed type="application/x-silverlight" id="' + this._id + '" width="1" height="1" source="#' + x.id + '" onError="__slError_rt" onLoad="__slLoad_rt"/>';
 					} else {
-						d.innerHTML = '<object type="application/x-silverlight" id="' + this._id + '" width="1" height="1"  data="data:,"><param name="source" value="#' + x.id + '"/><param name="onError" value="__slError_rt"/><param name="onLoad" value="__slLoad_rt"/></object>';
+						d.innerHTML = '<object type="application/x-silverlight" id="' + this._id + '" width="1" height="1"  data="data:application/x-silverlight,"><param name="source" value="#' + x.id + '"/><param name="onError" value="__slError_rt"/><param name="onLoad" value="__slLoad_rt"/></object>';
 					}
 					container.innerHTML;
 					this._player = d.firstChild;
@@ -902,18 +902,20 @@ var RadioTime = {
 						RadioTime.event.raise("playstateChanged", "error");
 					};
 					window["__slLoad_rt"] = function(s, a) {
-						RadioTime.debug("Silverlight is ready");
-						_this.__player = _this._player.content.findName("media");
-						_this.__player.AddEventListener("CurrentStateChanged", function(){
-							var cs = _this.__player.CurrentState;
-							RadioTime.debug("Silverlight state: " + cs);
-							// Keep it from erasing error state immediately
-							if (_this._error && cs == "Closed") {
-								_this._error = false;
-								return;
-							} 
-							RadioTime.event.raise("playstateChanged", _this.states[cs]);
-						});
+					RadioTime.debug("Silverlight is ready");
+						setTimeout( function() {
+							_this.__player = _this._player.content.findName("media");
+							_this.__player.AddEventListener("CurrentStateChanged", function() {
+								var cs = _this.__player.CurrentState;
+								RadioTime.debug("Silverlight state: " + cs);
+								// Keep it from erasing error state immediately
+								if (_this._error && cs == "Closed") {
+									_this._error = false;
+									return;
+								}
+								RadioTime.event.raise("playstateChanged", _this.states[cs]);
+							});
+						}, 200);
 					};
 				},
 				_play: function(url) {
