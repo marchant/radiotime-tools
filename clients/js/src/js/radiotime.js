@@ -13,16 +13,22 @@ var RadioTime = {
 		"dev": "localhost:55084/opml/"
 	},
 	init: function(partnerId, containerId, path, opts) {
+		opts = opts || {};
+		this._verbose = opts.verbose;
 		this._partnerId = partnerId;
 		this._container = document.getElementById(containerId);
 		this._path = path;
 		this._serial = this.cookie.read("radiotime_serial");
-		if (!this._serial) {
-			this._serial = this.makeId();
+		if (!this._serial && opts.serial) {
+			this._serial = opts.serial;
 			this.cookie.save("radiotime_serial", this._serial, 365*10);
+		} else if (!this._serial) {
+			this._serial = this.makeId();
+			RadioTime.debug("New id: " + this._serial);
+			this.cookie.save("radiotime_serial", this._serial, 365*10);
+		} else {
+			RadioTime.debug("Read serial from cookies: " + this._serial);
 		}
-		
-		opts = opts || {};
 		
 		this._env = (opts.env && this._baseUrls[opts.env]) ? opts.env: "stable";
 
@@ -169,6 +175,10 @@ var RadioTime = {
 			this._playlist = playlist;
 			this._currentItem = 0;
 			this.play();
+		},
+		currentItem: function() {
+			if (!this._playlist) return false;
+			return this._playlist[this._currentItem];
 		},
 		next: function() {
 			if (!this._playlist || !this._playlist.length) {
@@ -737,6 +747,7 @@ var RadioTime = {
 					 */
 					this._player.addEventListener('error', function(){
 						_this._stateChanged('error');
+						RadioTime.player.next();
 					}, true);
 					this._player.addEventListener('playing', function(){
 						_this._stateChanged('playing');
