@@ -729,8 +729,8 @@ var RadioTime = {
 			 * HTML5 player
 			 */
 			isSupported: function() { 
-				// iPad-only for now
-				return /iPad/i.test(navigator.userAgent); 
+				return /iPad/i.test(navigator.userAgent) ||
+					/opera.*presto/i.test(navigator.userAgent); 
 			},
 			implementation: {
 				init: function(container){
@@ -1478,8 +1478,9 @@ var RadioTime = {
 			RadioTime.cache.clear();
 		},
 		search: function(success, failure, query, filter) {
+			var filterVal = ( typeof filter === "undefined" || filter === null ? "" : "&filter=" + filter );
 			RadioTime.event.raise("loading", 'status_searching');
-			RadioTime.loadJSON("Search.ashx?query=" + query + "&filter=" + filter, success, failure, 60*1000);
+			RadioTime.loadJSON("Search.ashx?query=" + query + filterVal, success, failure, 60*1000);
 		},
 		getAccountClaim: function( success, failure ) {
 			var u = RadioTime._formatReq("Account.ashx?c=claim", true);
