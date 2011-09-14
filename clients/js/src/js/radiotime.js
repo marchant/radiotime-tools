@@ -167,6 +167,17 @@ var RadioTime = {
 		this.tzName = data.detected_tz;
 		this.timeCorrection = parseInt(data.utc_time)*1000 - (+new Date());
 	},
+	agent: {
+		isPhilips: function() {
+			return /(NETTV|PHILIPS_OLS_2008|PHILIPS_OLS_2010)/i.test(navigator.userAgent);
+		},
+		isIpad: function() {
+			return /iPad/i.test(navigator.userAgent);
+		},
+		isOpera: function() {
+			return /opera.*presto/i.test(navigator.userAgent);
+		}
+	},
 	player: {
 		startPlaylist: function(playlist) {
 			if (!playlist || !playlist.length) {
@@ -729,8 +740,8 @@ var RadioTime = {
 			 * HTML5 player
 			 */
 			isSupported: function() { 
-				return /iPad/i.test(navigator.userAgent) ||
-					/opera.*presto/i.test(navigator.userAgent); 
+				return RadioTime.agent.isIpad() ||
+					( RadioTime.agent.isOpera() && ! RadioTime.agent.isPhilips() );
 			},
 			implementation: {
 				init: function(container){
