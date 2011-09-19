@@ -12,6 +12,8 @@ class Main
 		//var url:String = "http://stream.radiotime.com/listen.stream?streamId=526903";
 		//var url:String = "http://kexp-mp3-2.cac.washington.edu:8000/;stream.nsv";
 		
+		System.security.allowDomain( "*", "tunein.com" );
+		
 		trace('Audio playback support: ' + System.capabilities.hasAudio);
 		trace('MP3 support: ' + System.capabilities.hasMP3);
 		trace('Audio streaming support: ' + System.capabilities.hasStreamingAudio);
