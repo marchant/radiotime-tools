@@ -9,7 +9,7 @@
 var RadioTime = {
 	_baseUrls: {
 		"stable": "opml.radiotime.com/",
-		"beta": "dev.radiotime.com/opml/",
+		"beta": "dev-opml.tunein.com/",
 		"dev": "localhost:55084/opml/"
 	},
 	init: function(partnerId, containerId, path, opts) {
@@ -176,6 +176,9 @@ var RadioTime = {
 		},
 		isOpera: function() {
 			return /opera.*presto/i.test(navigator.userAgent);
+		},
+		isAccessTv: function() {
+			return /NetFront\/4/i.test(navigator.userAgent);
 		}
 	},
 	player: {
@@ -740,7 +743,7 @@ var RadioTime = {
 			 * HTML5 player
 			 */
 			isSupported: function() { 
-				return RadioTime.agent.isIpad() ||
+				return RadioTime.agent.isIpad() || RadioTime.agent.isAccessTv() ||
 					( RadioTime.agent.isOpera() && ! RadioTime.agent.isPhilips() );
 			},
 			implementation: {
