@@ -87,13 +87,7 @@ RadioTime.merge(RadioTime, {
 		this._activePlayers = [];
 
 		if (!opts.noPlayer) {
-			for (var i = 0; i < RadioTime._players.length; i++) {
-				if (RadioTime._players[i].isSupported()) {
-					var p = RadioTime._players[i].implementation;
-					p.init(this._container);
-					this._activePlayers.push(p);
-				}
-			}
+			this._activePlayers = this.initSupportedPlayers(this._container);
 		}
 		if (this._activePlayers.length > 0) {
 			RadioTime.activePlayer = this._activePlayers[0]; // for a quick test only
@@ -202,35 +196,39 @@ RadioTime.merge(RadioTime, {
 		this.timeCorrection = parseInt(data.utc_time) * 1000 - (+new Date());
 	},
 	agent: {
+		userAgent: navigator.userAgent,
+		setAgent: function (agent) {
+			this.userAgent = agent;
+		},
 		isPhilips: function () {
-			return /(NETTV|PHILIPS_OLS_2008|PHILIPS_OLS_2010)/i.test(navigator.userAgent);
+			return /(NETTV|PHILIPS_OLS_2008|PHILIPS_OLS_2010)/i.test(this.userAgent);
 		},
 		isIpad: function () {
-			return /iPad/i.test(navigator.userAgent);
+			return /iPad/i.test(this.userAgent);
 		},
 		isOpera: function () {
-			return /opera.*presto/i.test(navigator.userAgent);
+			return /opera.*presto/i.test(this.userAgent);
 		},
 		isOperaOnSony: function () {
-			return /opera.*presto.*sony/i.test(navigator.userAgent);
+			return /opera.*presto.*sony/i.test(this.userAgent);
 		},
 		isAccessTv: function () {
-			return /NetFront\/4/i.test(navigator.userAgent);
+			return /NetFront\/4/i.test(this.userAgent);
 		},
 		isCeHtml: function () {
-			return navigator.userAgent.match(/CE-HTML/);
+			return this.userAgent.match(/CE-HTML/);
 		},
 		isMsie: function () {
-			return /MSIE/.test(navigator.userAgent);
+			return /MSIE/.test(this.userAgent);
 		},
 		isChrome: function () {
-			return navigator.userAgent.match(/chrome/i);
+			return this.userAgent.match(/chrome/i);
 		},
 		isAppleWebKit: function () {
-			return navigator.userAgent.match(/applewebkit/i);
+			return this.userAgent.match(/applewebkit/i);
 		},
 		isMetz: function () {
-			return navigator.userAgent.match(/;Metz;MMS;;;/);	
+			return this.userAgent.match(/;Metz;MMS;;;/);	
 		}
 	},
 	player: {
@@ -342,6 +340,17 @@ RadioTime.merge(RadioTime, {
 	},
 	addPlayer: function (player) {
 		this._players.unshift([function () { return true; }, player]);
+	},
+	initSupportedPlayers: function (container) {
+		var supportedPlayers = [];
+		for (var i = 0; i < this._players.length; i++) {
+			if (this._players[i].isSupported()) {
+				var p = this._players[i].implementation;
+				p.init(container);
+				supportedPlayers.push(p);
+			}
+		}	
+		return supportedPlayers;	
 	},
 	_players: [
 
@@ -831,11 +840,11 @@ RadioTime.merge(RadioTime, {
 				init: function (container) {
 					this.callSuper("init");
 					this.playerName = "html5";
-					var d = new Audio();
+					var d = document.createElement('audio');
 					this._id = RadioTime.makeId();
 					d.id = this._id;
 					container.appendChild(d);
-					this._player = RadioTime.$(this._id);
+					this._player = d;
 					var _this = this;
 					/*
 					* <audio> event handlers
