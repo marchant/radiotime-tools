@@ -228,7 +228,7 @@ RadioTime.merge(RadioTime, {
 			return this.userAgent.match(/applewebkit/i);
 		},
 		isMetz: function () {
-			return this.userAgent.match(/;Metz;MMS;;;/);	
+			return this.userAgent.match(/;Metz;MMS;;;/);
 		}
 	},
 	player: {
@@ -349,8 +349,8 @@ RadioTime.merge(RadioTime, {
 				p.init(container);
 				supportedPlayers.push(p);
 			}
-		}	
-		return supportedPlayers;	
+		}
+		return supportedPlayers;
 	},
 	_players: [
 
@@ -369,13 +369,15 @@ RadioTime.merge(RadioTime, {
 						this._id = RadioTime.makeId();
 						if (!RadioTime.agent.isMetz()) {
 							this._d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
-							this._player = RadioTime.$(this._id);
 						}
 						container.appendChild(this._d);
+						if (!RadioTime.agent.isMetz()) {
+							this._player = RadioTime.$(this._id);
+						}
 					},
 					_play: function (url, format) {
 						if (RadioTime.agent.isMetz()) {
-							this._playMetz(url, format);	
+							this._playMetz(url, format);
 						}
 						if (!this._player || !this._player.play)
 							return;
@@ -387,14 +389,14 @@ RadioTime.merge(RadioTime, {
 								RadioTime.player.next();
 							}
 							RadioTime.event.raise("playstateChanged", _this.states[_this._player.playState]);
-						};	
+						};
 					},
 					_playMetz: function (url, format) {
 						if (this._player) {
 							this._player.stop();
 							this._player = undefined;
 						}
-						if (format == "mp3" || format == "mp3raw") {							
+						if (format == "mp3" || format == "mp3raw") {
 							this._d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
 						}
 						if (format == "wma") {
@@ -430,7 +432,7 @@ RadioTime.merge(RadioTime, {
 							return ["wma"];
 						}
 						return [];
-					}					
+					}
 				}, RadioTime._userAgentBasedPlayer, true) // extends _userAgentBasedPlayer
 			},
 		{
@@ -937,7 +939,7 @@ RadioTime.merge(RadioTime, {
 					"connecting": "connecting"
 				},
 				getDefaultFormats: function () {
-					return ["mp3","mp3raw"];
+					return ["mp3", "mp3raw"];
 				},
 				getAdditionalFormats: function () {
 					if (!RadioTime.agent.isOperaOnSony()) {
