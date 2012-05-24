@@ -47,6 +47,11 @@ RadioTime.merge(RadioTime, {
 		"beta": "dev-opml.tunein.com/",
 		"dev": "localhost:55084/opml/"
 	},
+	_baseWebsiteUrls: {
+		"stable": "www.tunein.com/",
+		"beta": "dev.tunein.com/",
+		"dev": "localhost:51876/"
+	},
 	init: function (partnerId, containerId, path, opts) {
 		opts = opts || {};
 		this._verbose = opts.verbose;
@@ -67,6 +72,7 @@ RadioTime.merge(RadioTime, {
 
 		this._env = (opts.env && this._baseUrls[opts.env]) ? opts.env : "stable";
 		this._baseUrl = this._baseUrls[this._env];
+		this._baseWebsiteUrl = this._baseWebsiteUrls[this._env];
 		this._verbose = opts.verbose;
 		this._useAMPM = opts.useAMPM !== undefined ? opts.useAMPM : true;
 		this._enableEvents = opts.enableEvents !== undefined ? opts.enableEvents : true;
@@ -228,7 +234,7 @@ RadioTime.merge(RadioTime, {
 			return this.userAgent.match(/applewebkit/i);
 		},
 		isMetz: function () {
-			return this.userAgent.match(/;Metz;MMS;;;/);
+			return this.userAgent.match(/;Metz;MMS;;;/);	
 		}
 	},
 	player: {
@@ -349,8 +355,8 @@ RadioTime.merge(RadioTime, {
 				p.init(container);
 				supportedPlayers.push(p);
 			}
-		}
-		return supportedPlayers;
+		}	
+		return supportedPlayers;	
 	},
 	_players: [
 
@@ -369,15 +375,13 @@ RadioTime.merge(RadioTime, {
 						this._id = RadioTime.makeId();
 						if (!RadioTime.agent.isMetz()) {
 							this._d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
-						}
-						container.appendChild(this._d);
-						if (!RadioTime.agent.isMetz()) {
 							this._player = RadioTime.$(this._id);
 						}
+						container.appendChild(this._d);
 					},
 					_play: function (url, format) {
 						if (RadioTime.agent.isMetz()) {
-							this._playMetz(url, format);
+							this._playMetz(url, format);	
 						}
 						if (!this._player || !this._player.play)
 							return;
@@ -389,14 +393,14 @@ RadioTime.merge(RadioTime, {
 								RadioTime.player.next();
 							}
 							RadioTime.event.raise("playstateChanged", _this.states[_this._player.playState]);
-						};
+						};	
 					},
 					_playMetz: function (url, format) {
 						if (this._player) {
 							this._player.stop();
 							this._player = undefined;
 						}
-						if (format == "mp3" || format == "mp3raw") {
+						if (format == "mp3" || format == "mp3raw") {							
 							this._d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
 						}
 						if (format == "wma") {
@@ -432,7 +436,7 @@ RadioTime.merge(RadioTime, {
 							return ["wma"];
 						}
 						return [];
-					}
+					}					
 				}, RadioTime._userAgentBasedPlayer, true) // extends _userAgentBasedPlayer
 			},
 		{
@@ -939,7 +943,7 @@ RadioTime.merge(RadioTime, {
 					"connecting": "connecting"
 				},
 				getDefaultFormats: function () {
-					return ["mp3", "mp3raw"];
+					return ["mp3","mp3raw"];
 				},
 				getAdditionalFormats: function () {
 					if (!RadioTime.agent.isOperaOnSony()) {
@@ -1195,7 +1199,7 @@ RadioTime.merge(RadioTime, {
 	getReportProblemUrl: function (guide_id) {
 		return "Report.ashx?c=wizard&id=" + guide_id;
 	},
-	_formatReq: function (url, needAuth, data) {
+	_formatReq: function (url, needAuth, data, baseUrl) {
 		// Prepare the URL
 		data = data || "";
 		// Avoid formatting it twice
@@ -1203,7 +1207,7 @@ RadioTime.merge(RadioTime, {
 			return url;
 		}
 		if (url.indexOf("http") < 0) { // default request path
-			url = (needAuth ? "https://" : "http://") + RadioTime._baseUrl + url;
+			url = (needAuth ? "https://" : "http://") + (baseUrl ? baseUrl : RadioTime._baseUrl) + url;
 		}
 		url += (url.indexOf("?") != -1 ? "&" : "?");
 
@@ -1618,6 +1622,11 @@ RadioTime.merge(RadioTime, {
 			}, function () {
 				RadioTime.API.getAccountClaim(success, failure);
 			});
+		},
+		getPrivacyPolicy: function (success, failure) {
+			RadioTime.event.raise("loading", 'status_checking_account');
+			var url = RadioTime._formatReq("policies/privacyjson/", false, null, RadioTime._baseWebsiteUrl);
+			RadioTime._loader.sendRequest(url, success, failure);
 		},
 		getConfig: function (success, failure) {
 			RadioTime.event.raise("loading", 'status_loading_configuration');
