@@ -375,9 +375,11 @@ RadioTime.merge(RadioTime, {
 						this._id = RadioTime.makeId();
 						if (!RadioTime.agent.isMetz()) {
 							this._d.innerHTML = '<object id="' + this._id + '" type="audio/mpeg"></object>';
-							this._player = RadioTime.$(this._id);
 						}
 						container.appendChild(this._d);
+						if (!RadioTime.agent.isMetz()) {
+							this._player = RadioTime.$(this._id);
+						}
 					},
 					_play: function (url, format) {
 						if (RadioTime.agent.isMetz()) {
